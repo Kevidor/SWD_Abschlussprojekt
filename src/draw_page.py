@@ -7,55 +7,59 @@ class DrawingArea(QWidget):
     def __init__(self, joint_button, link_button):
         super().__init__()
         self.layout = QHBoxLayout(self)
-
         self.scene = QGraphicsScene(0, 0, 400, 300)
         self.view = QGraphicsView(self.scene)
         self.view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        self.table = Table()
+        self.table.table_widget.itemChanged.connect(self.update_drawing)
 
-        self.table = TableExample()
+        self.joint_button = joint_button
+        self.link_button = link_button
+        self.joint_items = []
+        self.link_items = []
 
         self.layout.addWidget(self.table)
         self.layout.addWidget(self.view)
-        self.joint_button = joint_button
-        self.link_button = link_button
-        self.selected_joints = []
 
-    def add_Joint(self, x, y):
-        ellipse_item = QGraphicsEllipseItem(x - 10, y - 10, 16, 16)
-        ellipse_item.setBrush(QBrush(Qt.GlobalColor.blue))
-        ellipse_item.setPen(QPen(Qt.GlobalColor.black))
-        self.scene.addItem(ellipse_item)
+    def update_drawing(self):
+        # Clear previous drawing
+        self.clear_drawing()
 
-    def add_Link(self, joint1, joint2):
-        print(joint1.pos().x(), joint1.pos().y(), joint2.pos().x(), joint2.pos().y())
-        line_item = QGraphicsLineItem(joint1.pos().x(), joint1.pos().y(), joint2.pos().x(), joint2.pos().y())
-        line_item.setPen(QPen(Qt.GlobalColor.black, 2))
-        self.scene.addItem(line_item)
+        # Draw joints based on table data
+        for row in range(self.table.rows):
+            x = float(self.table.table_widget.item(row, 0).text())
+            y = float(self.table.table_widget.item(row, 1).text())
+            ellipse_item = QGraphicsEllipseItem(x - 10, y - 10, 16, 16)
+            ellipse_item.setBrush(QBrush(Qt.GlobalColor.blue))
+            ellipse_item.setPen(QPen(Qt.GlobalColor.black))
+            self.scene.addItem(ellipse_item)
+            self.joint_items.append(ellipse_item)
+
+    def clear_drawing(self):
+        # Remove all joint and link items from the scene
+        for item in self.joint_items:
+            self.scene.removeItem(item)
+        for item in self.link_items:
+            self.scene.removeItem(item)
+        self.joint_items.clear()
+        self.link_items.clear()
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            mouse_pos = event.pos()
-            scene_pos = self.view.mapToScene(mouse_pos)
-            if self.joint_button.isChecked():
-                self.add_Joint(scene_pos.x(), scene_pos.y())
-            if self.link_button.isChecked():
-                joint = self.find_joint_at_position(scene_pos)
-                if joint and joint not in self.selected_joints:
-                    print(joint.pos().x(), joint.pos().y())
+        scene_pos = self.view.mapToScene(event.pos())
+        x, y = round(scene_pos.x(), 2), round(scene_pos.y(), 2)
+        self.table.add_row(str(x), str(y))
 
-                    self.selected_joints.append(joint)
-                    if len(self.selected_joints) == 2:
-                        self.add_Link(self.selected_joints[0], self.selected_joints[1])
-                        self.selected_joints = []
+        self.update_drawing()
 
-class TableExample(QWidget):
+class Table(QWidget):
     def __init__(self):
         super().__init__()
         self.rows = 1
         self.columns = 2
 
         self.setGeometry(100, 100, 400, 300)
-        self.setFixedWidth(233)
+        self.setFixedWidth(200)
 
         self.layout = QVBoxLayout(self)
 
@@ -64,6 +68,8 @@ class TableExample(QWidget):
 
         self.table_widget = QTableWidget(self.rows, self.columns)
         self.table_widget.setHorizontalHeaderLabels(["X", "Y"])
+        self.table_widget.setColumnWidth(1, 83)
+        self.table_widget.setColumnWidth(0, 83)
 
         for row in range(self.rows):
             for column in range(self.columns):
@@ -74,6 +80,7 @@ class TableExample(QWidget):
         self.add_row_button = QPushButton("Add Row")
         self.add_row_button.clicked.connect(self.add_row)
 
+        # Button to delete a row
         self.delete_row_button = QPushButton("Delete Row")
         self.delete_row_button.clicked.connect(self.delete_row)
 
@@ -82,11 +89,14 @@ class TableExample(QWidget):
         self.layout.addWidget(self.add_row_button)
         self.layout.addWidget(self.delete_row_button)
 
-    def add_row(self, x_value="0", y_value="0"):
+    def add_row(self, x_value="0", y_value="1"):
             self.rows += 1
             self.table_widget.setRowCount(self.rows)
+
+            self.table_widget.blockSignals(True)
             self.table_widget.setItem(self.rows - 1, 0, QTableWidgetItem(x_value))
             self.table_widget.setItem(self.rows - 1, 1, QTableWidgetItem(y_value))
+            self.table_widget.blockSignals(False)
 
     def delete_row(self):
         current_row = self.table_widget.currentRow()
@@ -95,15 +105,6 @@ class TableExample(QWidget):
             self.rows -= 1
         else:
             QMessageBox.warning(self, "Warning", "No row selected to delete.")
-
-    def fill_row(self):
-        current_row = self.table_widget.currentRow()
-        if current_row >= 0:
-            for column in range(self.columns):
-                item = QTableWidgetItem(f"Filled {current_row},{column}")
-                self.table_widget.setItem(current_row, column, item)
-        else:
-            QMessageBox.warning(self, "Warning", "No row selected to fill.")
 
 class ToolBar(QWidget):
     def __init__(self):

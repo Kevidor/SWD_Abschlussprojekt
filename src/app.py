@@ -9,24 +9,6 @@ from home_page import HomePage
 from draw_page import DrawPage
 from settings_page import SettingsPage
 
-
-class CustomScene(QGraphicsScene):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.placing_joints = False
-        self.joints = []
-
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton and self.placing_joints:
-            scene_pos = event.scenePos()
-            self.add_joint(scene_pos.x(), scene_pos.y())
-
-    def add_joint(self, x, y):
-        joint = self.addEllipse(x - 5, y - 5, 10, 10)  # Adjust the position to center the ellipse
-        joint.setBrush(Qt.blue)
-        self.joints.append((x, y))  # Store the joint position
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -62,12 +44,6 @@ class MainWindow(QMainWindow):
         self.menu_btn.setChecked(False)
 
         self.main_content = self.ui.stackedWidget
-
-        # Create a drawing area
-        self.drawing_area = QGraphicsView()
-        self.drawing_scene = CustomScene(self)
-        self.drawing_area.setScene(self.drawing_scene)
-        self.drawing_area.setFixedSize(400, 400)  # Set a fixed size for the drawing area
 
         # Define a list of menu items with names and icons
         self.menu_list = [
