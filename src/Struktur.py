@@ -5,67 +5,174 @@ from PIL import Image
 from mechanism_components import Joint, Link
 from mechanism import Mechanism
 import matplotlib.pyplot as plt
-
+from time import sleep
 def run():
     st.title("Mechanism")
     mechanism = Mechanism()
+    
+    # Session_States
+    
     if "df_joint" not in st.session_state:
-        st.session_state.df_joint = pd.DataFrame([{"Joints":0,"x": 0 , "y" :0, "is_fixed": False}])
-
+        st.session_state.df_joint = pd.DataFrame([{"Name":"Start","x": 25 , "y" :25, "static": True}])
+        
     if "df_link" not in st.session_state:
-        st.session_state.df_link = pd.DataFrame([{"Link":0,"joint1": "None", "joint2": "None"}])
-
+        st.session_state.df_link = pd.DataFrame([{"joint1": None, "joint2": None, "Linestyle":"-", "Line_color": "black"}])
+        
+    if "is_correct" not in st.session_state:
+        st.session_state.is_correct = True
+        
+    if "valid" not in st.session_state:
+        st.session_state.valid = True
+        
+    if "degrees_of_freedom" not in st.session_state:
+        st.session_state.degrees_of_freedom = 3
+        
+    if "static" not in st.session_state:
+        st.session_state.static = 1
+    
+    if "start_config" not in st.session_state:
+        st.session_state.start_config = True
+    
+    #Define columns    
     cols = st.columns(2,gap="medium",border=True, vertical_alignment="center")
-    with cols[0]:
-            st.subheader("Joints")
-            st.markdown("Press ➕ to add a new row")
-            st.markdown("Select der Joint and Press 🗑️ to delete the Joint""")
-            edit_df_joint = st.data_editor(st.session_state.df_joint, 
-                                           column_config = {
-                                            "Joints": st.column_config.NumberColumn("Joints",min_value=0,step=1),
-                                            "x": st.column_config.NumberColumn(min_value=0, max_value=100, step=1),
-                                            "y": st.column_config.NumberColumn(min_value=0, max_value=100, step=1),
-                                            "is_fixed": st.column_config.CheckboxColumn("is_fixed")},
-                                            num_rows="dynamic",
-                                            disabled=["is_fixed"],
-                                            hide_index=True,
-                                            use_container_width=True)	
+    
+    #Left side: Configuration of the Mechanism
+    with cols[0]:     
+            if st.session_state.start_config:
+                st.subheader("Joints")
+                st.markdown("Press ➕ to add a new row")
+                st.markdown("Select der Joint and Press 🗑️ to delete the Joint""")
 
-            #if len(edit_df_joint) > len(st.session_state.df_joint):
-            #    new_row = edist_df_joint.iloc[-1]  
-            #    mechanism.add_joint(new_row)
-            if not edit_df_joint.equals(st.session_state.df_joint):
-                st.session_state.df_joint = edit_df_joint
-
-            st.subheader("Link")
-            edit_df_link = st.data_editor(st.session_state.df_link,
-                                          column_config=
-                                                {
-                                                 "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index),
-                                                 "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index)},
-                                                num_rows="dynamic",
-                                                hide_index=True,
-                                                use_container_width=True)
-
-            if len(edit_df_link) > len(st.session_state.df_link):
-                new_row = edit_df_link.iloc[-1]  
-                if new_row["joint1"] != "None" and new_row["joint2"] != "None" and new_row["joint1"] != new_row["joint2"]:
-                    mechanism.add_link(new_row)
+                # Add new row, if you press a button
+                if st.session_state.df_joint.empty:
+                     if st.button("Add first row for joint"):
+                        st.session_state.df_joint = pd.DataFrame([{"Name": "fix Joint", "x": 25, "y": 25, "static": True}])
+                        st.rerun()
+                        
                 else:
-                    st.warning("⚠️Please select two different joints")
+                    edit_df_joint = st.data_editor(st.session_state.df_joint, 
+                                                   column_config = {
+                                                    "Name": st.column_config.TextColumn(),
+                                                    "x": st.column_config.NumberColumn(min_value=0, max_value=100),
+                                                    "y": st.column_config.NumberColumn(min_value=0, max_value=100),
+                                                    "static": st.column_config.CheckboxColumn("static",default=False)},
+                                                    num_rows="dynamic",
+                                                    hide_index=False,
+                                                    use_container_width=True)	
 
-            if not edit_df_link.equals(st.session_state.df_link):
-                st.session_state.df_link = edit_df_link
+                    if not edit_df_joint.equals(st.session_state.df_joint):
+                        df_joint_update = edit_df_joint.copy()
+                        st.session_state.df_joint = df_joint_update
+                        st.session_state.df_joint.reset_index(drop=True, inplace=True)
+                        st.rerun()
+
+                    #Debugging
+                    for index,row in st.session_state.df_joint.iterrows():
+                        st.write(f"Index: {index}, x: {row['x']}, y: {row['y']}, static: {row['static']}")
+
+                    st.write(len(edit_df_joint))
 
 
+                st.subheader("Link")
+                
+                if len(st.session_state.df_joint) != 0:
+                    if not st.session_state.df_link.empty:
+                        edit_df_link = st.data_editor(st.session_state.df_link,
+                                                      column_config=
+                                                            {
+                                                             "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index),
+                                                             "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index),
+                                                             "Linestyle": st.column_config.SelectboxColumn("Linestyle",options=["-","--","-."]),
+                                                             "Line_color": st.column_config.SelectboxColumn("Line_color", 
+                                                                                                            options=["blue","red", "magenta", "green", "yellow", "purple"])},
+                                                            num_rows="dynamic",
+                                                            hide_index=False,
+                                                            use_container_width=True)
+
+                        if not edit_df_link.equals(st.session_state.df_link):
+                            st.session_state.valid = True
+                            for index, row in edit_df_link.iterrows():
+                                if row["joint1"] == row["joint2"]:
+                                    st.warning(f"⚠️ Please choose different joints for Link{index}")
+                                    st.session_state.valid = False
+                                    st.session_state.is_correct = False
+
+                                else:
+                                    st.session_state.is_correct = True
+
+                            if st.session_state.is_correct:    
+                                st.session_state.df_link = edit_df_link.copy()
+                                st.session_state.df_link.reset_index(drop=True, inplace=True)
+                                st.rerun()
+                   
+                    elif st.session_state.df_link.empty:
+                        if st.button("add first row for link"):
+                            st.session_state.df_link = pd.DataFrame([{"joint1": 0, "joint2": 0, "Linestyle":"-", "Line_color": "black"}])
+                            st.rerun()
+
+                    if st.button("Save Konfiguration"):
+                        for (index_joint, row_joint), (index_link, row_link) in enumerate(zip(st.session_state.df_joint.iterrows(), st.session_state.df_link.iterrows())):
+                            Joint(index_joint,row_joint["x"], row_joint["y"], row_joint["static"])
+                            Link(row_link["joint1"], row_link["joint2"])
+
+                    #Debugging
+                    for index,row in st.session_state.df_link.iterrows():
+                        st.write(f"Index: {type(index)}, Joint1: {type(row['joint1'])}, Joint2: {type(row['joint2'])}")
+                else:
+                    st.error("There are not one Joints available")
+                #st.write("- Arrow-right solid line")
+                #st.write("- - Arrow-right dahsed line")
+                #st.write("-. Arrow-right dash dot line")
+            
+            else:
+                st.success("You started an animation")
+                st.write("Stop your animation to do a configuration")      
+    
     with cols[1]:
             st.subheader("Preview")
-            fig, ax = plt.subplots()
-            ax.set_xlim(0, 100)
-            ax.set_ylim(0, 100)
-            ax.plot(st.session_state.df_joint["x"], st.session_state.df_joint["y"], "ro")
-            ax.grid()
-            st.pyplot(fig)
+            if st.session_state.valid:
+                
+                #for a Preview, before starting an animation
+                fig, ax = plt.subplots()
+                
+                ax.set_xlim(0, 100)
+                ax.set_ylim(0, 100)
+                ax.scatter(st.session_state.df_joint["x"],st.session_state.df_joint["y"])
+                
+                for index,row in st.session_state.df_link.iterrows():
+                    j1_index = row["joint1"]
+                    j2_index = row["joint2"]
+                    if not st.session_state.df_joint.empty:
+                        if j1_index != None and pd.isnull(j2_index) or j2_index != None and pd.isnull(j1_index) or pd.isnull(j1_index) and pd.isnull(j2_index) or row["Linestyle"] == None  or row["Line_color"]== None:
+                            continue
+                        else:    
+                            x_values = [st.session_state.df_joint.loc[j1_index, "x"], st.session_state.df_joint.loc[j2_index, "x"]]
+                            y_values = [st.session_state.df_joint.loc[j1_index, "y"], st.session_state.df_joint.loc[j2_index, "y"]]
+                            Linestyle : str = row["Linestyle"]
+                            color: str = row["Line_color"]
+                    
+                        ax.plot(x_values, y_values, Linestyle, linewidth=2, color = color)
+                        
+                for index, row in st.session_state.df_joint.iterrows():
+                    ax.text(row["x"] + 1, row["y"] + 1, row["Name"], fontsize=12, color="blue")
+                    
+                ax.grid()
+                st.pyplot(fig)
+                
+                cols_button = st.columns(2,gap="medium")
+                with cols_button[0]:
+                    if st.button("Animation"):
+                        st.success("Animation started")
+                        st.session_state.start_config = False    
+                        sleep(2)
+                        st.rerun()
+                with cols_button[1]:    
+                    if st.button("Stop Animation"):
+                        st.success("You stopped your Animation")
+                        st.session_state.start_config = True
+                        sleep(2)
+                        st.rerun()
 
-            if st.button("Animation"):
-                st.success("Animation started")
+            else:
+                #get error caused by a joint conflict
+                st.error("Joint conflict")
