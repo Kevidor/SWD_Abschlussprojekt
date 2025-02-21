@@ -1,15 +1,15 @@
-import os
 import pandas as pd
 import streamlit as st
-from PIL import Image
 from mechanism_components import Joint, Link
+from database_Joint import Joint_db
+from database_link import Link_db 
 from mechanism import Mechanism
 import matplotlib.pyplot as plt
 from time import sleep
+
 def run():
     st.title("Mechanism")
     mechanism = Mechanism()
-    
     # Session_States
     
     if "df_joint" not in st.session_state:
@@ -57,6 +57,7 @@ def run():
                                                     "y": st.column_config.NumberColumn(min_value=0, max_value=100),
                                                     "static": st.column_config.CheckboxColumn("static",default=False)},
                                                     num_rows="dynamic",
+                                                    disabled=["static"],
                                                     hide_index=False,
                                                     use_container_width=True)	
 
@@ -69,9 +70,8 @@ def run():
                     #Debugging
                     for index,row in st.session_state.df_joint.iterrows():
                         st.write(f"Index: {index}, x: {row['x']}, y: {row['y']}, static: {row['static']}")
-
-                    st.write(len(edit_df_joint))
-
+                    joint_dict = st.session_state.df_joint.to_dict(orient="index")
+                        
 
                 st.subheader("Link")
                 
@@ -104,17 +104,22 @@ def run():
                                 st.session_state.df_link = edit_df_link.copy()
                                 st.session_state.df_link.reset_index(drop=True, inplace=True)
                                 st.rerun()
-                   
+                        
+                        link_dict = st.session_state.df_link.to_dict(orient="index")
                     elif st.session_state.df_link.empty:
                         if st.button("add first row for link"):
                             st.session_state.df_link = pd.DataFrame([{"joint1": 0, "joint2": 0, "Linestyle":"-", "Line_color": "black"}])
                             st.rerun()
 
+                    name_project = st.text_input("Name of the Konfiguration:")
+                    [joint_dict,link_dict]
                     if st.button("Save Konfiguration"):
-                        for (index_joint, row_joint), (index_link, row_link) in enumerate(zip(st.session_state.df_joint.iterrows(), st.session_state.df_link.iterrows())):
-                            Joint(index_joint,row_joint["x"], row_joint["y"], row_joint["static"])
-                            Link(row_link["joint1"], row_link["joint2"])
-
+                        for (index_joint, row_joint), (index_link, row_link) in zip(st.session_state.df_joint.iterrows(), st.session_state.df_link.iterrows()):
+                            #Joint(index_joint,row_joint["Name"],row_joint["x"], row_joint["y"], row_joint["static"])
+                            Joint_db(index_joint,row_joint["Name"],row_joint["x"], row_joint["y"], row_joint["static"]).store_data()
+                            #Link(row_link["joint1"], row_link["joint2"])
+                            Link_db(index_link,row_link["joint1"], row_link["joint2"],row_link["Linestyle"],row_link["Line_color"]).store_data()
+                            
                     #Debugging
                     for index,row in st.session_state.df_link.iterrows():
                         st.write(f"Index: {type(index)}, Joint1: {type(row['joint1'])}, Joint2: {type(row['joint2'])}")

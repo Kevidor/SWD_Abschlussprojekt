@@ -6,10 +6,8 @@ from typing import Self
 class Serializable(ABC):
     db_connector =  None
 
-    def __init__(self, id, creation_date: datetime = None, last_update: datetime = None) -> None:
+    def __init__(self, id) -> None:
         self.id = id
-        self.creation_date = creation_date if creation_date else datetime.now()
-        self.last_update = last_update if last_update else datetime.now()
 
     @classmethod
     @abstractmethod
@@ -18,7 +16,6 @@ class Serializable(ABC):
 
     def store_data(self):
         print("Storing data...")
-        self.last_update = datetime.now()
 
         query = Query()
         # upsert: https://tinydb.readthedocs.io/en/latest/usage.html#upserting-data
@@ -39,9 +36,8 @@ class Serializable(ABC):
     
     @classmethod
     def find_by_attribute(cls, by_attribute: str, attribute_value: str, num_to_return=1) -> Self | list[Self]:
-        # Load data from the database and create an instance of the Device class
-        Jointquery= Query()
-        result = cls.db_connector.search(Jointquery[by_attribute] == attribute_value)
+        query= Query()
+        result = cls.db_connector.search(query[by_attribute] == attribute_value)
 
         if result:
             if num_to_return == -1:
@@ -57,10 +53,10 @@ class Serializable(ABC):
     @classmethod
     def find_all(cls) -> list[Self]:
         # Load all data from the database and create instances of the Joint Class
-        Joints = []
+        entry = []
         for Joint_data in cls.db_connector.all():
-            Joints.append(cls.instantiate_from_dict(Joint_data))
-        return Joints
+            entry.append(cls.instantiate_from_dict(Joint_data))
+        return entry
 
     # String representation of the class
     def __repr__(self):

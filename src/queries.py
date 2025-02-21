@@ -1,5 +1,5 @@
 import os
-from tinydb import TinyDB, Query
+from tinydb import TinyDB
 from serializer import serializer
 
 def find_joints() -> list:

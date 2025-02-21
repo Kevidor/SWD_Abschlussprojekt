@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
-import json
 from time import sleep
+
 def run():	
     st.title("Export your data")
     st.write("Export your data to a CSV file")
-
     select_action = st.radio("Choose your fomart to export your data:",options=["CSV","Json"])
     df = pd.DataFrame({
             "A": [1,2,3,4],

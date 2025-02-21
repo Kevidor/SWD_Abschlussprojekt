@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-import os
 from time import sleep
-def run():	
+def run():
+    
     st.title("Import your data")
     st.write("Import your data from a CSV-File or from Json-File")
 
@@ -20,6 +20,7 @@ def run():
                     st.write("Importing data...")
                     with open(data_name,"r", encoding="UTF-8") as file:
                         df = pd.read_csv(file, sep=",", header=0,encoding="UTF-8")
+                        print(pd.json_normalize(df["joint"]))
                         st.success("nice")
                         sleep(2)
                         st.rerun()
@@ -29,9 +30,7 @@ def run():
                 st.error("Such no File exist")
             except Exception as e:
                 st.error(f"Correct your data {e}")
-        if not df.empty:
-            st.write(df)
-        else: pass
+    
     if select_action == "Json":
         data_name = st.text_input("Put the name of your file:")
         
@@ -47,6 +46,7 @@ def run():
                     with open(data_name,"r", encoding="UTF-8") as file:
                         df = pd.read_json(file, orient="columns",encoding="UTF-8")
                         st.success("nice")
+                        print(pd.json_normalize(df["joint"]))
                         sleep(2)
                         st.rerun()
                 else:
@@ -55,6 +55,3 @@ def run():
                 st.error("Such no File exist")
             except Exception as e:
                 st.error(f"Correct your data {e}")
-        if not df.empty:
-            st.write(df)
-        else: pass
