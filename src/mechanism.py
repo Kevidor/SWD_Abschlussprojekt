@@ -77,7 +77,7 @@ class Mechanism:
             
             return self.calc_error(l1)
 
-        result = opt.least_squares(objective, x0, ftol=1e-15, xtol=1e-15, gtol=1e-15)
+        result = opt.least_squares(objective, x0)
 
         for i, joint in enumerate(non_fixed_joints):
             joint.x, joint.y = result.x[i * 2], result.x[i * 2 + 1]
@@ -86,8 +86,8 @@ class Mechanism:
     
     def create_animation(self):
         fig, ax = plt.subplots()
-        ax.set_xlim(-50, 50)
-        ax.set_ylim(-50, 50)
+        ax.set_xlim(-90, 90)
+        ax.set_ylim(-90, 90)
         ax.set_aspect('equal')
 
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
@@ -100,7 +100,7 @@ class Mechanism:
 
         def update(frame):
             """Update the mechanism at each frame"""
-            result = mekanism.optimize_positions(1)
+            result = mekanism.optimize_positions(2)
 
             x_vals = [joint.x for joint in mekanism.joints]
             y_vals = [joint.y for joint in mekanism.joints]
@@ -121,7 +121,7 @@ class Mechanism:
 
             return [joint_scatter] + link_lines + list(trajectory_lines.values())
 
-        ani = animation.FuncAnimation(fig, update, frames=360, interval=50, blit=True)
+        ani = animation.FuncAnimation(fig, update, frames=180, interval=50, blit=True)
 
         ani.save("mechanism_animation.gif", writer="pillow", fps=30)
 
@@ -132,14 +132,37 @@ if __name__ == "__main__":
     # Initialize Mechanism
     mekanism = Mechanism()
 
-    joint0 = Joint(None, "Joint0", 0, 0, True, False)
-    joint1 = Joint(None, "Joint1", 10, 35, False, True)
-    joint2 = Joint(None, "Joint2", -25, 10, False, True)
+    # Viergelenk
+    #joint0 = Joint(None, "Joint0", 0, 0, True, False)
+    #joint1 = Joint(None, "Joint1", 10, 35, False, True)
+    #joint2 = Joint(None, "Joint2", -25, 10, True, True)
+    #
+    #rotor0 = Rotor(-30, 0, joint2)
+    #
+    #link0 = Link(None, joint0, joint1)
+    #link1 = Link(None, joint1, rotor0.rot_joint)
 
-    rotor0 = Rotor(-30, 0, joint2)
-
-    link0 = Link(None, joint0, joint1)
-    link1 = Link(None, joint1, rotor0.rot_joint)
+    # Strandbeest
+    joint0 = Joint(None, "Joint1", 0, 0, True, False)
+    joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
+    joint2 = Joint(None, "Joint4", 18.2, 37.3, False, True)
+    joint3 = Joint(None, "Joint5", -34.82, 19.9, False, True)
+    joint4 = Joint(None, "Joint6", -30.5, -19.22, False, True)
+    joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
+    joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
+    
+    rotor0 = Rotor(38, 7.8, joint1)
+    
+    link0 = Link(None, joint0, joint2)
+    link1 = Link(None, joint0, joint3)
+    link2 = Link(None, joint0, joint6)
+    link3 = Link(None, rotor0.rot_joint, joint2)
+    link4 = Link(None, joint2, joint3)
+    link5 = Link(None, joint3, joint4)
+    link6 = Link(None, joint4, joint5)
+    link7 = Link(None, joint5, joint6)
+    link8 = Link(None, joint6, rotor0.rot_joint)
+    link9 = Link(None, joint6, joint4)
 
     mekanism.create_animation()
 
