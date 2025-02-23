@@ -17,7 +17,7 @@ def run():
         if st.button("Export data"):
             if data_name != "":
                 data_name = data_name+".csv"
-                with open( data_name,"w",encoding= "UTF-8") as file:
+                with open( file=data_name,mode="w",encoding= "UTF-8") as file:
                     df.to_csv(file,sep=",", index=False, header=True)
                     st.success("A CSV-File created successfully")
                     sleep(2)

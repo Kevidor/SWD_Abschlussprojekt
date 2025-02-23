@@ -12,6 +12,7 @@ class Link_db(Serializable):
         self.joint2 = joint2
         self.Linestyle = Linestyle
         self.Line_color = Line_color
+
         
     @classmethod
     def instantiate_from_dict(cls, data: dict) -> Self:

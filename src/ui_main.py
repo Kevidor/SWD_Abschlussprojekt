@@ -21,6 +21,7 @@ selected_option = option_menu(
 if selected_option == "home":
     selected_module = importlib.import_module(selected_option)
     selected_module.run()
+    
 if selected_option == "Struktur":
     selected_module = importlib.import_module(selected_option)
     selected_module.run()

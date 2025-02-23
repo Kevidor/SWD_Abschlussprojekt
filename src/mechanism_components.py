@@ -78,6 +78,7 @@ class Rotor:
         self.x = x
         self.y = y
         self.rot_joint = rot_joint
+        self.rot_joint.is_fixed = True
         self.lenght = ((rot_joint.x - x) ** 2 + (rot_joint.y - y) ** 2) ** 0.5
         self.angle = degrees(atan((rot_joint.y - y) / (rot_joint.x - x)))
         Rotor.rotors_count += 1
