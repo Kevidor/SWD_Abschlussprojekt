@@ -3,7 +3,9 @@ import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-
+import tempfile
+import pandas as pd
+import os
 class Mechanism:
     def __init__(self):
         self.joints = Joint.joints
@@ -13,7 +15,7 @@ class Mechanism:
         self.x = np.array([])
         self.A = np.array([])
         self.L = np.array([])
-
+        
     def clear(self):
         self.joints = []
         self.links = []
@@ -94,28 +96,32 @@ class Mechanism:
         
         return result
     
-    def create_animation(self):
+    def create_animation(self ):
         fig, ax = plt.subplots()
-        ax.set_xlim(-90, 90)
-        ax.set_ylim(-90, 90)
-        ax.set_aspect('equal')
-
+        
+        ax.set_xlim(-100,100)
+        ax.set_ylim(-100,100)
+        ax.set_aspect("equal")
+        
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
+        rotor_scatter, = ax.plot([],[],'g', markersize=3)
         link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
-
         # Dictionary to store past positions of drawn joints
         drawn_joints = [i for i, joint in enumerate(self.joints) if joint.is_drawn]
         joint_trajectories = {i: ([], []) for i in drawn_joints}
         trajectory_lines = {i: ax.plot([], [], 'g-', linewidth=1)[0] for i in drawn_joints}
 
         def update(frame):
-            """Update the mechanism at each frame"""
-            self.optimize_positions(2)
+            """Update the echanism at each frame"""
+            self.optimize_positions(1)
 
             x_vals = [joint.x for joint in self.joints]
             y_vals = [joint.y for joint in self.joints]
-
             joint_scatter.set_data(x_vals, y_vals)
+
+            x_val_rot = [rotor.x for rotor in self.rotors]
+            y_val_rot = [rotor.y for rotor in self.rotors]
+            rotor_scatter.set_data(x_val_rot, y_val_rot)
 
             for i, link in enumerate(self.links):
                 x_link = [link.joint1.x, link.joint2.x]
@@ -128,16 +134,28 @@ class Mechanism:
                 x_traj.append(self.joints[i].x)
                 y_traj.append(self.joints[i].y)
                 trajectory_lines[i].set_data(x_traj, y_traj)
-
-            return [joint_scatter] + link_lines + list(trajectory_lines.values())
-
-        ani = animation.FuncAnimation(fig, update, frames=180, interval=50, blit=True)
-
-        ani.save("mechanism_animation.gif", writer="pillow", fps=30)
-
+    
+            return [joint_scatter] + [rotor_scatter] + link_lines + list(trajectory_lines.values()) 
+        
+        ani = animation.FuncAnimation(fig, update, frames=360, interval=50, blit= False)
+        gif_temp = tempfile.NamedTemporaryFile(delete=False, suffix=".gif")
+        ani.save(gif_temp.name, writer=animation.PillowWriter(fps=30))
         print("GIF saved as mechanism_animation.gif")
+        return gif_temp.name
+        
+    def create_csv(self):
+        data = []
+        for i in range(360):
+            self.optimize_positions(1),
+            data.append({
+                        "rotor_angle" : [rotor.angle for rotor in self.rotors],
+                        "x" : [joint.x for joint in self.joints],
+                        "y" : [joint.y for joint in self.joints]
+                        })
+        datra_frame = pd.DataFrame(data)
+        return datra_frame.to_csv("Values.csv",index=True, header=True)
 
-
+        
 if __name__ == "__main__":
     # Initialize Mechanism
     mekanism = Mechanism()
