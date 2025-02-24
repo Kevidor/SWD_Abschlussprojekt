@@ -143,36 +143,36 @@ if __name__ == "__main__":
     mekanism = Mechanism()
 
     # Viergelenk
-    #joint0 = Joint(None, "Joint0", 0, 0, True, False)
-    #joint1 = Joint(None, "Joint1", 10, 35, False, True)
-    #joint2 = Joint(None, "Joint2", -25, 10, False, True)
-    #
-    #rotor0 = Rotor(-30, 0, joint2)
-    #
-    #link0 = Link(None, joint0, joint1)
-    #link1 = Link(None, joint1, rotor0.rot_joint)
+    joint0 = Joint(None, "Joint0", 0, 0, True, False)
+    joint1 = Joint(None, "Joint1", 10, 35, False, True)
+    joint2 = Joint(None, "Joint2", -25, 10, False, True)
+    
+    rotor0 = Rotor(-30, 0, joint2)
+    
+    link0 = Link(None, joint0, joint1)
+    link1 = Link(None, joint1, rotor0.rot_joint)
 
     # Strandbeest
-    joint0 = Joint(None, "Joint1", 0, 0, True, False)
-    joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
-    joint2 = Joint(None, "Joint4", 18.2, 37.3, False, True)
-    joint3 = Joint(None, "Joint5", -34.82, 19.9, False, True)
-    joint4 = Joint(None, "Joint6", -30.5, -19.22, False, True)
-    joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
-    joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
-    
-    rotor0 = Rotor(38, 7.8, joint1)
-    
-    link0 = Link(None, joint0, joint2)
-    link1 = Link(None, joint0, joint3)
-    link2 = Link(None, joint0, joint6)
-    link3 = Link(None, rotor0.rot_joint, joint2)
-    link4 = Link(None, joint2, joint3)
-    link5 = Link(None, joint3, joint4)
-    link6 = Link(None, joint4, joint5)
-    link7 = Link(None, joint5, joint6)
-    link8 = Link(None, joint6, rotor0.rot_joint)
-    link9 = Link(None, joint6, joint4)
+    #joint0 = Joint(None, "Joint1", 0, 0, True, False)
+    #joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
+    #joint2 = Joint(None, "Joint4", 18.2, 37.3, False, True)
+    #joint3 = Joint(None, "Joint5", -34.82, 19.9, False, True)
+    #joint4 = Joint(None, "Joint6", -30.5, -19.22, False, True)
+    #joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
+    #joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
+    #
+    #rotor0 = Rotor(38, 7.8, joint1)
+    #
+    #link0 = Link(None, joint0, joint2)
+    #link1 = Link(None, joint0, joint3)
+    #link2 = Link(None, joint0, joint6)
+    #link3 = Link(None, rotor0.rot_joint, joint2)
+    #link4 = Link(None, joint2, joint3)
+    #link5 = Link(None, joint3, joint4)
+    #link6 = Link(None, joint4, joint5)
+    #link7 = Link(None, joint5, joint6)
+    #link8 = Link(None, joint6, rotor0.rot_joint)
+    #link9 = Link(None, joint6, joint4)
     
     print(f"Remaining DOF: {mekanism.calc_DOF()}")
     
