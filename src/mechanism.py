@@ -65,7 +65,8 @@ class Mechanism:
     def optimize_positions(self, angle: float = 10):
         l1 = self.create_lenght_matrix()
         
-        self.rotors[0].update_rotation(angle)
+        for rotor in self.rotors:
+            rotor.update_rotation(angle)
 
         non_fixed_joints = [j for j in self.joints if not j.is_fixed]
 
@@ -91,35 +92,47 @@ class Mechanism:
         ax.set_aspect('equal')
 
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
-        link_lines = [ax.plot([], [], 'b-')[0] for _ in mekanism.links]  # Blue links
+        rotor_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red rotors
+        link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
+        rotor_lines = [ax.plot([], [], 'g--')[0] for _ in self.links]  # Green rot_lines
 
         # Dictionary to store past positions of drawn joints
-        drawn_joints = [i for i, joint in enumerate(mekanism.joints) if joint.is_drawn]
+        drawn_joints = [i for i, joint in enumerate(self.joints) if joint.is_drawn]
         joint_trajectories = {i: ([], []) for i in drawn_joints}
         trajectory_lines = {i: ax.plot([], [], 'g-', linewidth=1)[0] for i in drawn_joints}
 
         def update(frame):
             """Update the mechanism at each frame"""
-            result = mekanism.optimize_positions(2)
+            self.optimize_positions(2)
 
-            x_vals = [joint.x for joint in mekanism.joints]
-            y_vals = [joint.y for joint in mekanism.joints]
+            x_vals = [joint.x for joint in self.joints]
+            y_vals = [joint.y for joint in self.joints]
 
             joint_scatter.set_data(x_vals, y_vals)
 
-            for i, link in enumerate(mekanism.links):
+            x_vals_rot = [rotor.x for rotor in self.rotors]
+            y_vals_rot = [rotor.y for rotor in self.rotors]
+
+            rotor_scatter.set_data(x_vals_rot, y_vals_rot)
+
+            for i, link in enumerate(self.links):
                 x_link = [link.joint1.x, link.joint2.x]
                 y_link = [link.joint1.y, link.joint2.y]
                 link_lines[i].set_data(x_link, y_link)
 
+            for i, rotor in enumerate(self.rotors):
+                x_line = [rotor.x, rotor.rot_joint.x]
+                y_line = [rotor.y, rotor.rot_joint.y]
+                rotor_lines[i].set_data(x_line, y_line)
+
             # Update trajectories for drawn joints
             for i in drawn_joints:
                 x_traj, y_traj = joint_trajectories[i]
-                x_traj.append(mekanism.joints[i].x)
-                y_traj.append(mekanism.joints[i].y)
+                x_traj.append(self.joints[i].x)
+                y_traj.append(self.joints[i].y)
                 trajectory_lines[i].set_data(x_traj, y_traj)
 
-            return [joint_scatter] + link_lines + list(trajectory_lines.values())
+            return [joint_scatter] + [rotor_scatter] + link_lines + rotor_lines + list(trajectory_lines.values())
 
         ani = animation.FuncAnimation(fig, update, frames=180, interval=50, blit=True)
 
@@ -127,43 +140,53 @@ class Mechanism:
 
         print("GIF saved as mechanism_animation.gif")
 
+    def create_csv(self):
+        for i in range(360):
+            self.optimize_positions(1)
+            
+            print(rotor0.angle, end=", ")
+            for joint in self.joints:
+                print(f"{joint.x}, {joint.y}", end=", ")
+
+            print("--")
 
 if __name__ == "__main__":
     # Initialize Mechanism
     mekanism = Mechanism()
 
     # Viergelenk
-    #joint0 = Joint(None, "Joint0", 0, 0, True, False)
-    #joint1 = Joint(None, "Joint1", 10, 35, False, True)
-    #joint2 = Joint(None, "Joint2", -25, 10, True, True)
-    #
-    #rotor0 = Rotor(-30, 0, joint2)
-    #
-    #link0 = Link(None, joint0, joint1)
-    #link1 = Link(None, joint1, rotor0.rot_joint)
+    joint0 = Joint(None, "Joint0", 0, 0, True, True)
+    joint1 = Joint(None, "Joint1", 10, 35, False, True)
+    joint2 = Joint(None, "Joint2", -25, 10, False, True)
+    
+    rotor0 = Rotor(-30, 0, joint2)
+
+    link0 = Link(None, joint0, joint1)
+    link1 = Link(None, joint1, rotor0.rot_joint)
 
     # Strandbeest
-    joint0 = Joint(None, "Joint1", 0, 0, True, False)
-    joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
-    joint2 = Joint(None, "Joint4", 18.2, 37.3, False, True)
-    joint3 = Joint(None, "Joint5", -34.82, 19.9, False, True)
-    joint4 = Joint(None, "Joint6", -30.5, -19.22, False, True)
-    joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
-    joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
-    
-    rotor0 = Rotor(38, 7.8, joint1)
-    
-    link0 = Link(None, joint0, joint2)
-    link1 = Link(None, joint0, joint3)
-    link2 = Link(None, joint0, joint6)
-    link3 = Link(None, rotor0.rot_joint, joint2)
-    link4 = Link(None, joint2, joint3)
-    link5 = Link(None, joint3, joint4)
-    link6 = Link(None, joint4, joint5)
-    link7 = Link(None, joint5, joint6)
-    link8 = Link(None, joint6, rotor0.rot_joint)
-    link9 = Link(None, joint6, joint4)
+    #joint0 = Joint(None, "Joint1", 0, 0, True, False)
+    #joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
+    #joint2 = Joint(None, "Joint4", 18.2, 37.3, False, True)
+    #joint3 = Joint(None, "Joint5", -34.82, 19.9, False, True)
+    #joint4 = Joint(None, "Joint6", -30.5, -19.22, False, True)
+    #joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
+    #joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
+    #
+    #rotor0 = Rotor(38, 7.8, joint1)
+    #
+    #link0 = Link(None, joint0, joint2)
+    #link1 = Link(None, joint0, joint3)
+    #link2 = Link(None, joint0, joint6)
+    #link3 = Link(None, rotor0.rot_joint, joint2)
+    #link4 = Link(None, joint2, joint3)
+    #link5 = Link(None, joint3, joint4)
+    #link6 = Link(None, joint4, joint5)
+    #link7 = Link(None, joint5, joint6)
+    #link8 = Link(None, joint6, rotor0.rot_joint)
+    #link9 = Link(None, joint6, joint4)
 
+    #mekanism.create_csv()
     mekanism.create_animation()
 
     #mekanism.create_joint_matrix()

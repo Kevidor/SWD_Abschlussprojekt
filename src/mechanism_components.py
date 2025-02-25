@@ -51,25 +51,6 @@ class Link:
     def delete(self):
         Link.link_count -= 1
     
-#class Rotor:
-#    def __init__(self, x: float, y:float, lenght: float = 1.0, angle: float = 0):
-#        #self.center_joint = Joint(None, None, x, y, True)
-#        self.x = x
-#        self.y = y
-#        self.lenght = lenght
-#        self.angle = angle
-#        self.rot_joint = Joint(None, None,
-#                               self.x + self.lenght * cos(radians(self.angle)),
-#                               self.y + self.lenght * sin(radians(self.angle))
-#                            )
-#    def update_rotation(self, add_angle: float = 1):
-#        self.angle += add_angle
-#        self.rot_joint.x = self.x + self.lenght * cos(radians(self.angle))
-#        self.rot_joint.y = self.y + self.lenght * sin(radians(self.angle))
-#
-#    def __str__(self):
-#        return f"Rotor({self.rot_joint}, {self.angle})"
-    
 class Rotor:
     rotors_count = 0
     rotors = []
@@ -91,3 +72,8 @@ class Rotor:
 
     def __str__(self):
         return f"Rotor({self.lenght}, {self.angle}, {self.rot_joint})"
+
+if __name__ == "__main__":
+    joint0 = Joint(0, "Joint0", 0, 0).__dict__
+
+    print(joint0)
