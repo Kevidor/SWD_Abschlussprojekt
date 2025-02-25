@@ -13,7 +13,7 @@ class Serializable(ABC):
     @abstractmethod
     def instantiate_from_dict(cls, data: dict) -> Self:
         pass
-
+        
     def store_data(self):
         print("Storing data...")
 

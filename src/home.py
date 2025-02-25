@@ -1,10 +1,12 @@
 import streamlit as st
+import os
 
 def run():
     st.title("Home")
+    columns = st.columns(2, gap="small")
     st.header("How to create a Mechanism")
-    st.markdown("""In the left workspace you can edit
-                everything and in the right section you get a preview of what you are currently creating.""")
+    st.markdown("""To create a mechanism, you have to go to the Structure tab, where you will find the tables on the left to configure joints etc. On the right-hand side you will see a preview of what your configuration will look like. There are different buttons, which already tell you by their name what they do.
+If the degrees of freedom are not equal to zero, the mechanism will be blocked by the animation.""")
     st.subheader("Joint:")
     st.markdown("Each joint consists of the following attributes:")
     st.markdown("Name: Name of the joint")
