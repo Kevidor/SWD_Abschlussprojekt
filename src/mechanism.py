@@ -179,17 +179,31 @@ class Mechanism(Serializable):
 
     def create_csv(self):
         data = []
-        header = ["x", "y"]
+        header = []
+        
+        # Header
+        for i in range(len(self.rotors)):
+            header.append("angle" + str(i))
+        
+        for i in range(len(self.joints)):
+            header.append("x" + str(i))
+            header.append("y" + str(i))
+            
+        # Values
         for i in range(360):
             self.optimize_positions(1)
-            for joint in self.joints:
-                data.append({
-                        "x" : joint.x,
-                        "y" : joint.y
-                        })
+            row = []
+            for i, rotor in enumerate(self.rotors):
+                row.append(rotor.angle)    
+            
+            for i, joint in enumerate(self.joints):
+                row.append(joint.x)
+                row.append(joint.y)
+                
+            data.append(row)
         
         data_frame = pd.DataFrame(data=data)
-        return data_frame.to_csv(index=False, header=header)
+        return data_frame.to_csv(index=False, header=header, sep=',')
     
     def to_dict(self):
          return{

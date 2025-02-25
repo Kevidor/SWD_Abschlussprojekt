@@ -107,7 +107,7 @@ def run():
                                                    column_config= {
                                                        "x": st.column_config.NumberColumn(),
                                                         "y": st.column_config.NumberColumn(),
-                                                       "joint": st.column_config.SelectboxColumn("joint", options=edit_df_joint.index)},
+                                                       "joint": st.column_config.SelectboxColumn("joint", options=edit_df_joint.index, default=None)},
                                                    num_rows="dynamic",
                                                    hide_index=False,
                                                    use_container_width=True)
@@ -127,10 +127,10 @@ def run():
                     edit_df_link = st.data_editor(st.session_state.df_link,
                                                   column_config=
                                                         {
-                                                         "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index),
-                                                         "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index),
-                                                         "Linestyle": st.column_config.SelectboxColumn("Linestyle",options=["-","--","-."]),
-                                                         "Line_color": st.column_config.SelectboxColumn("Line_color", options=["black","blue","red", "magenta", "green", "yellow", "purple"])},
+                                                         "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index, default= None),
+                                                         "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index, default = None),
+                                                         "Linestyle": st.column_config.SelectboxColumn("Linestyle",options=["-","--","-."],default="-"),
+                                                         "Line_color": st.column_config.SelectboxColumn("Line_color", options=["black","blue","red", "magenta", "green", "yellow", "purple"], default="black")},
                                                         num_rows="dynamic",
                                                         hide_index=False,
                                                         use_container_width=True)
@@ -219,49 +219,67 @@ def run():
         if st.session_state.valid:
             if st.session_state.start_anim == False:                  
             #for a Preview, before starting an animation
-                
-                fig, ax = plt.subplots()
-                
+            
+                fig, ax = plt.subplots()    
                 ax.set_xlim(-100,100)
                 ax.set_ylim(-100,100)
                 ax.scatter(st.session_state.df_joint["x"],st.session_state.df_joint["y"])
                 ax.scatter(st.session_state.rotor["x"],st.session_state.rotor["y"])
+                
                 for index,row in st.session_state.df_link.iterrows():
                     j1_index = row["joint1"]
                     j2_index = row["joint2"]
                     if not st.session_state.df_joint.empty:
-                        if j1_index != None and pd.isnull(j2_index) or j2_index != None and pd.isnull(j1_index) or pd.isnull(j1_index) and pd.isnull(j2_index) or row["Linestyle"] == None  or row["Line_color"]== None:
+                        if (j1_index is None and j2_index is None) or row["Linestyle"] is None  or row["Line_color"] is None:
                             continue
-                        else:    
-                            x_values = [st.session_state.df_joint.loc[j1_index, "x"], st.session_state.df_joint.loc[j2_index, "x"]]
+                        else:   
+                            x_values = [st.session_state.df_joint.loc[j1_index, "x"] , st.session_state.df_joint.loc[j2_index, "x"]]
                             y_values = [st.session_state.df_joint.loc[j1_index, "y"], st.session_state.df_joint.loc[j2_index, "y"]]
                             Linestyle : str = row["Linestyle"]
                             color: str = row["Line_color"]
-                        ax.plot(x_values, y_values, Linestyle, linewidth=2, color = color)
-                for index, row in st.session_state.df_joint.iterrows():
-                    ax.text(row["x"] + 1, row["y"] + 1, row["Name"], fontsize=12, color="blue")
+                            ax.plot(x_values, y_values, Linestyle, linewidth=2, color = color)
+                
+                for index,row in st.session_state.df_joint.iterrows():
+                    ax.text(row["x"] + 2, row["y"] + 3, row["Name"], fontsize=12, color="black")
+               
+                for index,row in st.session_state.rotor.iterrows():
+                    if not st.session_state.df_joint.empty:
+                        joint_rot_plt = row["joint"]
+                        if row["x"] is None or row["y"] is None or joint_rot_plt is None:
+                            continue
+                        else:
+                            x_values = [row["x"] , st.session_state.df_joint.loc[joint_rot_plt, "x"]]
+                            y_values = [row["y"], st.session_state.df_joint.loc[joint_rot_plt, "y"]]
+                            ax.plot(x_values,y_values,"--", color = "orange")
                 ax.grid()
                 st.pyplot(fig)
                 #st.info(mechanism.rotors)
                 #st.info(mechanism.links)
                 #st.info(mechanism.joints)
-                cols = st.columns(2)
+                cols = st.columns(3)
                 with cols[0]:
                     if st.button("Start Animation", disabled= st.session_state.disable_sim):
                         st.session_state.start_anim = True
                         st.session_state.start_config = False
                         st.rerun()
+               
                 with cols[1]:
                     if not st.session_state.disable_sim:
                         st.session_state.gif = os.path.join(os.path.curdir)
                         cvs_file = mechanism.create_csv()
                         st.download_button(label="Download CSV", data=cvs_file, file_name="mechanism_Data.csv", mime="text/.csv")
+                
+                with cols[2]:
+                    file =fig.savefig("Preview_Mechanimus.png", transparent=None, dpi= 'figure')
+                    with open("Preview_Mechanimus.png", "rb") as preview:
+                        st.download_button(label="Save Preview-Ilustration",data= preview, file_name="Preview_Mechanimus.png", mime="image/png")
             else:
                 st.info("The animation could take a few seconds!")
                 mechanism.create_animation()
                 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mechanismus_animation.gif"), "rb") as f:
                     gif_bytes = f.read()
                     st.image(gif_bytes, caption="Mechanism-Animation", use_container_width=True)
+                
                 columns_button = st.columns(3,gap="small")
                 with columns_button[0]:
                     st.download_button(label="Download GIF", data=st.session_state.gif, file_name="mechanism_animation.gif", mime="image/gif")
