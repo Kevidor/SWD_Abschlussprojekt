@@ -32,7 +32,7 @@ def skeletonize(img):
     return skeleton
 
 # Load the image
-img = cv2.imread("photo_image.jpg")
+img = cv2.imread("photo_image.jpeg")
 
 # Convert to grayscale
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -57,16 +57,6 @@ show_image(binary, "close")
 binary = skeletonize(binary)
 show_image(binary, "skeletonize")
 
-kernel = np.ones((3, 3), np.uint8)
-binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=5)
-show_image(binary, "close")
-
-_, binary = cv2.threshold(gray, 64, 255, cv2.THRESH_BINARY_INV)
-show_image(binary, "threshold2")
-
-binary = skeletonize(binary)
-show_image(binary, "skeletonize2")
-
 # Detect circles
 circles = cv2.HoughCircles(
     gray,
@@ -81,18 +71,38 @@ if circles is not None:
         x, y, r = circle
         cv2.circle(img, (x, y), r, (255, 0, 255), 3)
         cv2.circle(img, (x, y), 2, (255, 255, 255), 3)
-
-# Edge Detection
-edges = cv2.Canny(binary, 50, 150, apertureSize=3)
-show_image(edges)
+    
+    print(f"Circles: {circles}")
 
 # Assuming 'edges' is your edge-detected image
-lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=10, minLineLength=60, maxLineGap=15)
-print(lines)
+lines = cv2.HoughLinesP(binary, 1, np.pi / 180, threshold=10, minLineLength=60, maxLineGap=15)
 
-# Draw filtered lines on the original image
+# Create a blank image to draw lines
+line_image = np.zeros_like(img)
+show_image(line_image, "Black")
+
+# Draw detected lines on the blank image
 for line in lines:
     for x1, y1, x2, y2 in line:
-        cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)  # Draw in white
+show_image(line_image, "Lines on Black")
 
+# Convert to grayscale and apply thresholding
+gray_lines = cv2.cvtColor(line_image, cv2.COLOR_BGR2GRAY)
+thresh_lines = cv2.adaptiveThreshold(gray_lines, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+
+# Find contours of the lines
+contours, _ = cv2.findContours(thresh_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Draw contours on the original image
+for contour in contours:
+    # Get the minimum area rectangle for each contour
+    rect = cv2.minAreaRect(contour)
+    print(rect)
+    box = cv2.boxPoints(rect)  # Get the four corners of the rectangle
+    box = np.int32(box)  # Convert to integer points  # Convert to integer points
+
+    # Draw the rotated rectangle on the original image
+    img = cv2.drawContours(img, [box], 0, (0, 0, 255), 2)  # Draw in red
+# Show the final image with rotated rectangles
 show_image(img)

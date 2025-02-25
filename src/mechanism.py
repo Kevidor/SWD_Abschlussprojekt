@@ -96,8 +96,8 @@ class Mechanism:
     
     def create_animation(self):
         fig, ax = plt.subplots()
-        ax.set_xlim(-90, 90)
-        ax.set_ylim(-90, 90)
+        ax.set_xlim(0, 2000)
+        ax.set_ylim(-2000, 0)
         ax.set_aspect('equal')
 
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
@@ -152,6 +152,8 @@ if __name__ == "__main__":
     link0 = Link(None, joint0, joint1)
     link1 = Link(None, joint1, rotor0.rot_joint)
 
+    print(mekanism.__dict__)
+
     # Strandbeest
     #joint0 = Joint(None, "Joint1", 0, 0, True, False)
     #joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
@@ -174,9 +176,9 @@ if __name__ == "__main__":
     #link8 = Link(None, joint6, rotor0.rot_joint)
     #link9 = Link(None, joint6, joint4)
     
-    print(f"Remaining DOF: {mekanism.calc_DOF()}")
+    #print(f"Remaining DOF: {mekanism.calc_DOF()}")
     
-    mekanism.create_animation()
+    #mekanism.create_animation()
 
     #mekanism.create_joint_matrix()
     #mekanism.create_link_matrix()
