@@ -1,11 +1,20 @@
-from mechanism_components import Joint, Link, Rotor
+import os
 import numpy as np
+import pandas as pd
+import tempfile as tp
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from mechanism_components import Joint, Link, Rotor
+from database import DatabaseConnector
+from serializable import Serializable
+from io import BytesIO
 
-class Mechanism:
-    def __init__(self):
+class Mechanism(Serializable):
+    db_connector = DatabaseConnector().get_table("Project")
+    
+    def __init__(self, name ):
+        super().__init__(name)
         self.joints = Joint.joints
         self.links = Link.links
         self.rotors = Rotor.rotors
@@ -13,13 +22,34 @@ class Mechanism:
         self.x = np.array([])
         self.A = np.array([])
         self.L = np.array([])
-
+        
     def clear(self):
         self.joints = []
         self.links = []
+        self.rotors = []
+        Joint.clear()
+        Link.clear()
+        Rotor.clear()
         self.x = np.array([])
         self.A = np.array([])
         self.L = np.array([])
+        
+    def update(self):
+        self.joints = Joint.joints
+        self.links = Link.links
+        self.rotors = Rotor.rotors
+
+    def calc_DOF(self):
+        self.update()
+        n = len(self.joints)
+        #print(f"Joints: {n}")
+        BC = len([j for j in self.joints if j.is_fixed])
+        #print(f"BC: {BC}")
+        m = len(self.links)
+        #print(f"Links: {m}")
+        dof = 2 * n - 2 * BC - m
+        #print(dof)
+        return dof 
 
     def create_joint_matrix(self):
         self.x = np.zeros((Joint.joints_count * 2, 1))
@@ -85,12 +115,11 @@ class Mechanism:
         
         return result
     
-    def create_animation(self):
+    def create_animation(self ):
         fig, ax = plt.subplots()
-        ax.set_xlim(-90, 90)
-        ax.set_ylim(-90, 90)
-        ax.set_aspect('equal')
-
+        ax.set_xlim(-100,100)
+        ax.set_ylim(-100,100)
+        ax.set_aspect("equal")
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
         rotor_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red rotors
         link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
@@ -103,12 +132,7 @@ class Mechanism:
 
         def update(frame):
             """Update the mechanism at each frame"""
-            self.optimize_positions(2)
-
-            x_vals = [joint.x for joint in self.joints]
-            y_vals = [joint.y for joint in self.joints]
-
-            joint_scatter.set_data(x_vals, y_vals)
+            self.optimize_positions(1)
 
             x_vals_rot = [rotor.x for rotor in self.rotors]
             y_vals_rot = [rotor.y for rotor in self.rotors]
@@ -125,44 +149,66 @@ class Mechanism:
                 y_line = [rotor.y, rotor.rot_joint.y]
                 rotor_lines[i].set_data(x_line, y_line)
 
-            # Update trajectories for drawn joints
             for i in drawn_joints:
                 x_traj, y_traj = joint_trajectories[i]
                 x_traj.append(self.joints[i].x)
                 y_traj.append(self.joints[i].y)
                 trajectory_lines[i].set_data(x_traj, y_traj)
-
+    
             return [joint_scatter] + [rotor_scatter] + link_lines + rotor_lines + list(trajectory_lines.values())
-
-        ani = animation.FuncAnimation(fig, update, frames=180, interval=50, blit=True)
-
-        ani.save("mechanism_animation.gif", writer="pillow", fps=30)
-
+        
+        save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"mechanismus_animation.gif")
+        ani = animation.FuncAnimation(fig, update, frames=360, interval=50, blit= True)
+        ani.save(filename=save_dir, writer="pillow", fps=30)
         print("GIF saved as mechanism_animation.gif")
 
     def create_csv(self):
+        data = []
+        header = ["x", "y"]
         for i in range(360):
             self.optimize_positions(1)
-            
-            print(rotor0.angle, end=", ")
             for joint in self.joints:
-                print(f"{joint.x}, {joint.y}", end=", ")
+                data.append({
+                        "x" : joint.x,
+                        "y" : joint.y
+                        })
+        
+        data_frame = pd.DataFrame(data=data)
+        return data_frame.to_csv(index=False, header=header)
+    
+    def to_dict(self):
+         return{
+                "name" : self.name,
+                "Joints" : [joint.to_dict() for joint in self.joints],
+                "Links" : [link.to_dict() for link in self.links],
+                "rotor" : [rotor.to_dict() for rotor in self.rotors]
+                }
+         
+    @classmethod
+    def instantiate_from_dict(cls, data: dict):
+        return cls(data['name'], data['joint'], data['link'], data['rotor'])
 
-            print("--")
-
+    def get_name(self) -> str:
+        return F"{self.id}"
+    
+    def __str__(self) -> str:
+        return F"Projectname {self.id} with this Konfiguration {self.joints}, {self.links}, {self.rotors}"
+  
 if __name__ == "__main__":
     # Initialize Mechanism
-    mekanism = Mechanism()
-
+    mekanism = Mechanism(None)
+    
     # Viergelenk
-    joint0 = Joint(None, "Joint0", 0, 0, True, True)
+    joint0 = Joint(None, "Joint0", 0, 0, True, False)
     joint1 = Joint(None, "Joint1", 10, 35, False, True)
     joint2 = Joint(None, "Joint2", -25, 10, False, True)
     
     rotor0 = Rotor(-30, 0, joint2)
-
+    
     link0 = Link(None, joint0, joint1)
     link1 = Link(None, joint1, rotor0.rot_joint)
+    
+    #print(mekanism.__dict__)
 
     # Strandbeest
     #joint0 = Joint(None, "Joint1", 0, 0, True, False)
@@ -185,8 +231,8 @@ if __name__ == "__main__":
     #link7 = Link(None, joint5, joint6)
     #link8 = Link(None, joint6, rotor0.rot_joint)
     #link9 = Link(None, joint6, joint4)
+    
 
-    #mekanism.create_csv()
     mekanism.create_animation()
 
     #mekanism.create_joint_matrix()

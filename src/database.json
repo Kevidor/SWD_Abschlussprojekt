@@ -1,0 +1,80 @@
+{
+    "joint": {
+        "1": {
+            "id": 0,
+            "name": "Start",
+            "x": 0.0,
+            "y": 0.0,
+            "is_fixed": true,
+            "is_drawn": false
+        },
+        "2": {
+            "id": 1,
+            "name": "w",
+            "x": 10.0,
+            "y": 35.0,
+            "is_fixed": false,
+            "is_drawn": true
+        },
+        "3": {
+            "id": 2,
+            "name": "w",
+            "x": -25.0,
+            "y": 10.0,
+            "is_fixed": false,
+            "is_drawn": true
+        }
+    },
+    "Link": {
+        "1": {
+            "id": 0,
+            "joint1": {
+                "index": 0,
+                "name": "Start",
+                "x": 0.0,
+                "y": 0.0,
+                "is_fixed": true,
+                "is_drawn": false
+            },
+            "joint2": {
+                "index": 1,
+                "name": "w",
+                "x": 10.0,
+                "y": 35.0,
+                "is_fixed": false,
+                "is_drawn": true
+            },
+            "Linestyle": "-",
+            "Line_color": "black"
+        },
+        "2": {
+            "id": 1,
+            "joint1": {
+                "index": 1,
+                "name": "w",
+                "x": 10.0,
+                "y": 35.0,
+                "is_fixed": false,
+                "is_drawn": true
+            },
+            "joint2": {
+                "index": 2,
+                "name": "w",
+                "x": -25.0,
+                "y": 10.0,
+                "is_fixed": false,
+                "is_drawn": true
+            },
+            "Linestyle": "-",
+            "Line_color": "black"
+        }
+    },
+    "Project": {
+        "1": {
+            "id": "test",
+            "joint": [],
+            "link": [],
+            "rotor": []
+        }
+    }
+}
