@@ -145,3 +145,8 @@ class Rotor(Serializable):
     def __str__(self) -> str:
         return F"coordinates {self.x},{self.y} and with the joint {self.rot_joint}"
     
+
+if __name__ == "__main__":
+    joint0 = Joint(0, "Joint0", 0, 0).__dict__
+
+    print(joint0)

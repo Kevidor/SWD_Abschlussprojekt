@@ -1,14 +1,15 @@
-from mechanism_components import Joint, Link, Rotor
+import os
 import numpy as np
+import pandas as pd
+import tempfile as tp
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-import pandas as pd
-import tempfile as tp
-from io import BytesIO
-import os
-from serializable import Serializable
+from mechanism_components import Joint, Link, Rotor
 from database import DatabaseConnector
+from serializable import Serializable
+from io import BytesIO
+
 class Mechanism(Serializable):
     db_connector = DatabaseConnector().get_table("Project")
     
@@ -41,13 +42,13 @@ class Mechanism(Serializable):
     def calc_DOF(self):
         self.update()
         n = len(self.joints)
-        print(f"Joints: {n}")
+        #print(f"Joints: {n}")
         BC = len([j for j in self.joints if j.is_fixed])
-        print(f"BC: {BC}")
+        #print(f"BC: {BC}")
         m = len(self.links)
-        print(f"Links: {m}")
+        #print(f"Links: {m}")
         dof = 2 * n - 2 * BC - m
-        print(dof)
+        #print(dof)
         return dof 
 
     def create_joint_matrix(self):
@@ -120,44 +121,47 @@ class Mechanism(Serializable):
         ax.set_ylim(-100,100)
         ax.set_aspect("equal")
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
-        rotor_scatter, = ax.plot([],[],'g', markersize=3)
+        rotor_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red rotors
         link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
+        rotor_lines = [ax.plot([], [], 'g--')[0] for _ in self.links]  # Green rot_lines
+
         # Dictionary to store past positions of drawn joints
         drawn_joints = [i for i, joint in enumerate(self.joints) if joint.is_drawn]
         joint_trajectories = {i: ([], []) for i in drawn_joints}
         trajectory_lines = {i: ax.plot([], [], 'g-', linewidth=1)[0] for i in drawn_joints}
 
         def update(frame):
-            """Update the echanism at each frame"""
+            """Update the mechanism at each frame"""
             self.optimize_positions(1)
 
-            x_vals = [joint.x for joint in self.joints]
-            y_vals = [joint.y for joint in self.joints]
-            joint_scatter.set_data(x_vals, y_vals)
+            x_vals_rot = [rotor.x for rotor in self.rotors]
+            y_vals_rot = [rotor.y for rotor in self.rotors]
 
-            x_val_rot = [rotor.x for rotor in self.rotors]
-            y_val_rot = [rotor.y for rotor in self.rotors]
-            rotor_scatter.set_data(x_val_rot, y_val_rot)
+            rotor_scatter.set_data(x_vals_rot, y_vals_rot)
 
             for i, link in enumerate(self.links):
                 x_link = [link.joint1.x, link.joint2.x]
                 y_link = [link.joint1.y, link.joint2.y]
                 link_lines[i].set_data(x_link, y_link)
 
-            # Update trajectories for drawn joints
+            for i, rotor in enumerate(self.rotors):
+                x_line = [rotor.x, rotor.rot_joint.x]
+                y_line = [rotor.y, rotor.rot_joint.y]
+                rotor_lines[i].set_data(x_line, y_line)
+
             for i in drawn_joints:
                 x_traj, y_traj = joint_trajectories[i]
                 x_traj.append(self.joints[i].x)
                 y_traj.append(self.joints[i].y)
                 trajectory_lines[i].set_data(x_traj, y_traj)
     
-            return [joint_scatter] + [rotor_scatter] + link_lines + list(trajectory_lines.values()) 
-        save_dir = os.path.dirname(os.path.abspath(__file__))
-        save_dir = os.path.join(save_dir,"mechanismus_animation.gif")
+            return [joint_scatter] + [rotor_scatter] + link_lines + rotor_lines + list(trajectory_lines.values())
+        
+        save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"mechanismus_animation.gif")
         ani = animation.FuncAnimation(fig, update, frames=360, interval=50, blit= True)
         ani.save(filename=save_dir, writer="pillow", fps=30)
+        print("GIF saved as mechanism_animation.gif")
 
-        
     def create_csv(self):
         data = []
         header = []
@@ -207,6 +211,7 @@ class Mechanism(Serializable):
 if __name__ == "__main__":
     # Initialize Mechanism
     mekanism = Mechanism(None)
+    
     # Viergelenk
     joint0 = Joint(None, "Joint0", 0, 0, True, False)
     joint1 = Joint(None, "Joint1", 10, 35, False, True)
@@ -241,10 +246,8 @@ if __name__ == "__main__":
     #link9 = Link(None, joint6, joint4)
     
 
-    #print(f"Remaining DOF: {mekanism.calc_DOF()}")
-    
-    #mekanism.create_animation()
-    #mekanism.create_csv()
+    mekanism.create_animation()
+
     #mekanism.create_joint_matrix()
     #mekanism.create_link_matrix()
     #l = mekanism.create_lenght_matrix()
