@@ -5,8 +5,8 @@ import importlib
 st.set_page_config(page_title="Mainhub",layout="wide")
 selected_option = option_menu(
                               menu_title= None,
-                              options=["home","Struktur", "Export","Import"],
-                              icons =["house","tools","cloud-plus","arrow-down-square","cloud-arrow-up"],
+                              options=["home","Struktur"],
+                              icons =["house","tools","cloud-plus"],
                               menu_icon="cast",
                               default_index=0,
                               orientation="horizontal",
@@ -23,13 +23,5 @@ if selected_option == "home":
     selected_module.run()
     
 if selected_option == "Struktur":
-    selected_module = importlib.import_module(selected_option)
-    selected_module.run()
-
-elif selected_option == "Export":
-    selected_module = importlib.import_module(selected_option)
-    selected_module.run()
-    
-elif selected_option == "Import":
     selected_module = importlib.import_module(selected_option)
     selected_module.run()
