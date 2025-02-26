@@ -197,7 +197,35 @@ class Mechanism(Serializable):
                 "Links" : [link.to_dict() for link in self.links],
                 "rotor" : [rotor.to_dict() for rotor in self.rotors]
                 }
+    def get_error(self):
+        l1  = self.create_lenght_matrix()
+        rotor_Angle = []
+        error_data = []
+        for i in range(360):
+            for rotor in self.rotors:
+                rotor.update_rotation(1)
+                rotor_Angle.append(rotor.angle)
+            angle_er = np.array(rotor_Angle)
             
+            for i_links in range(error_data): 
+                error_data_cur= (self.calc_error(l1=l1))
+                error_data_= np.array(error_data_cur)
+        fig, ax = plt.subplots()
+        ax.set_title("Fehler pro Link über 360 Iterationen")
+        ax.set_xlabel("Iteration (entspricht Rotationsgrad)")
+        ax.set_ylabel("Längen-Fehler")
+        
+        for i_link in range(len(self.links)):
+            ax.plot(angle_er, error_data[:, i_link], label=f"Link {i_link+1}")
+    
+        ax.legend()
+        fig.savefig("Fehler_test.png")
+        plt.show()  
+        
+                #print(error_arr)
+                #ax.plot(angle_er,error_arr[:,i_links])
+        
+        fig.savefig("Fehler_test.png")
              
     @classmethod
     def instantiate_from_dict(cls, data: dict):
@@ -275,4 +303,5 @@ if __name__ == "__main__":
 
     #print(mekanism.create_csv())
     print(mekanism.calc_error(10))
+    mekanism.get_error()
     #print(x_value)

@@ -127,8 +127,8 @@ def run():
                     edit_df_link = st.data_editor(st.session_state.df_link,
                                                   column_config=
                                                         {
-                                                         "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index, default= None),
-                                                         "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index, default = None),
+                                                         "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index, default=None),
+                                                         "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index, default= None),
                                                          "Linestyle": st.column_config.SelectboxColumn("Linestyle",options=["-","--","-."],default="-"),
                                                          "Line_color": st.column_config.SelectboxColumn("Line_color", options=["black","blue","red", "magenta", "green", "yellow", "purple"], default="black")},
                                                         num_rows="dynamic",
@@ -194,18 +194,23 @@ def run():
                     st.info(mechanism.calc_DOF())
                     st.session_state.disable_sim = False if mechanism.calc_DOF() == 0 else True
                     st.info(st.session_state.disable_sim)
+                
+                selected_projekt = st.selectbox("Select your your Project", options= ["Viergelenk"])
                 name_project = st.text_input("Name of the Konfiguration:")
-
-                if st.button("Save Konfiguration", disabled= True if name_project == None else False):
-                    Project = Mechanism(name_project)
-                    Project.store_data()
-                    
-                    
+                
+                cols_project = st.columns(2)
+                with cols_project[0]:
+                    if st.button("Save Konfiguration", disabled= True if name_project == None else False):
+                        Project = Mechanism(name_project)
+                        Project.store_data()
+                with cols_project[1]:
+                    if st.button("Load your Projekt"):
+                        st.success("loaded succesfully")    
+                        sleep(2)
+                        st.rerun()
             else:
                 st.error("There are not one Joints available")
-            #st.write("- Arrow-right solid line")
-            #st.write("- - Arrow-right dahsed line")
-            #st.write("-. Arrow-right dash dot line")
+                
         else:
             st.info("Stop your animation to do a configuration")
             
@@ -223,29 +228,31 @@ def run():
                 fig, ax = plt.subplots()    
                 ax.set_xlim(-100,100)
                 ax.set_ylim(-100,100)
+                ax.set_title("Mechanismus")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
                 ax.scatter(st.session_state.df_joint["x"],st.session_state.df_joint["y"])
                 ax.scatter(st.session_state.rotor["x"],st.session_state.rotor["y"])
                 
-                for index,row in st.session_state.df_link.iterrows():
+                for index_link,row in st.session_state.df_link.iterrows():
                     j1_index = row["joint1"]
                     j2_index = row["joint2"]
-                    if not st.session_state.df_joint.empty:
-                        if (j1_index is None and j2_index is None) or row["Linestyle"] is None  or row["Line_color"] is None:
-                            continue
-                        else:   
-                            x_values = [st.session_state.df_joint.loc[j1_index, "x"] , st.session_state.df_joint.loc[j2_index, "x"]]
-                            y_values = [st.session_state.df_joint.loc[j1_index, "y"], st.session_state.df_joint.loc[j2_index, "y"]]
-                            Linestyle : str = row["Linestyle"]
-                            color: str = row["Line_color"]
-                            ax.plot(x_values, y_values, Linestyle, linewidth=2, color = color)
-                
+                    if st.session_state.df_joint.empty or j1_index not in st.session_state.df_joint.index or j2_index not in st.session_state.df_joint.index or row["Linestyle"] is None  or row["Line_color"] is None:
+                            st.warning("Correct your ")
+                    else:
+                        x_values = [st.session_state.df_joint.loc[j1_index, "x"] , st.session_state.df_joint.loc[j2_index, "x"]]
+                        y_values = [st.session_state.df_joint.loc[j1_index, "y"], st.session_state.df_joint.loc[j2_index, "y"]]
+                        Linestyle : str = row["Linestyle"]
+                        color: str = row["Line_color"]
+                        ax.plot(x_values, y_values, Linestyle, linewidth=2, color = color)
+
                 for index,row in st.session_state.df_joint.iterrows():
                     ax.text(row["x"] + 2, row["y"] + 3, row["Name"], fontsize=12, color="black")
                
                 for index,row in st.session_state.rotor.iterrows():
                     if not st.session_state.df_joint.empty:
                         joint_rot_plt = row["joint"]
-                        if row["x"] is None or row["y"] is None or joint_rot_plt is None:
+                        if pd.isnull(row["x"]) or pd.isnull(row["y"]) or pd.isnull(joint_rot_plt):
                             continue
                         else:
                             x_values = [row["x"] , st.session_state.df_joint.loc[joint_rot_plt, "x"]]
@@ -265,12 +272,11 @@ def run():
                
                 with cols[1]:
                     if not st.session_state.disable_sim:
-                        st.session_state.gif = os.path.join(os.path.curdir)
                         cvs_file = mechanism.create_csv()
                         st.download_button(label="Download CSV", data=cvs_file, file_name="mechanism_Data.csv", mime="text/.csv")
                 
                 with cols[2]:
-                    file =fig.savefig("Preview_Mechanimus.png", transparent=None, dpi= 'figure')
+                    fig.savefig("Preview_Mechanimus.png", transparent=None, dpi= 'figure')
                     with open("Preview_Mechanimus.png", "rb") as preview:
                         st.download_button(label="Save Preview-Ilustration",data= preview, file_name="Preview_Mechanimus.png", mime="image/png")
             else:
@@ -282,7 +288,10 @@ def run():
                 
                 columns_button = st.columns(3,gap="small")
                 with columns_button[0]:
-                    st.download_button(label="Download GIF", data=st.session_state.gif, file_name="mechanism_animation.gif", mime="image/gif")
+                    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mechanismus_animation.gif"), "rb") as f:
+                        gif_bytes = f.read()
+                        st.download_button(label="Download GIF", data=gif_bytes, file_name="mechanism_animation.gif", mime="image/gif")
+                
                 with columns_button[1]:
                     if st.button("Stop Animation"):
                         st.success("You stopped your Animation")
