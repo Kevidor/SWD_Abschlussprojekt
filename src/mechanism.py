@@ -60,7 +60,7 @@ class Mechanism(Serializable):
         #print(f"Links: {m}")
         #print(dof)
 
-        return dof 
+        return dof
 
     def create_joint_matrix(self):
         self.x = np.zeros((len(Joint.joints) * 2, 1))
@@ -131,11 +131,12 @@ class Mechanism(Serializable):
         
         if self.bounds:
             x_min, x_max, y_min, y_max = self.bounds
+            self.bounds = []
         else:
             x_min, x_max, y_min, y_max = 100, 100, 100, 100
 
-        margin_x = (x_max - x_min) * 0.2
-        margin_y = (y_max - y_min) * 0.2
+        margin_x = (x_max - x_min) * 0.4
+        margin_y = (y_max - y_min) * 0.4
 
         ax.set_xlim(x_min - margin_x, x_max + margin_x)
         ax.set_ylim(y_min - margin_y, y_max + margin_y)
@@ -147,10 +148,9 @@ class Mechanism(Serializable):
         link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
         rotor_lines = [ax.plot([], [], 'b--')[0] for _ in self.links]  # Green rot_lines
 
-        # Dictionary to store past positions of drawn joints
         drawn_joints = [i for i, joint in enumerate(self.joints) if joint.is_drawn]
         joint_trajectories = {i: ([], []) for i in drawn_joints}
-        trajectory_lines = {i: ax.plot([], [], 'g-', linewidth=1)[0] for i in drawn_joints}
+        trajectory_lines = {i: ax.plot([], [], 'g-', linewidth=1)[0] for i in drawn_joints} # Green trajectories
 
         def update(frame):
             """Update the mechanism at each frame"""
@@ -192,15 +192,33 @@ class Mechanism(Serializable):
     def create_from_sketch(self, img_path: str):
         self.image_recognizer.load_img(img_path)
         self.image_recognizer.assign_components(60)
+        self.bounds = self.image_recognizer.get_bounds()
+        self.clear()
 
         for joint in self.image_recognizer.joint_assignment:
-            pass
+            x, y = joint
+            Joint(None, None, x, y)
 
-        for link in self.image_recognizer.link_assignment:
-            pass
+        for (j1, j2) in self.image_recognizer.link_assignment.values():
+            x1, y1 = j1
+            x2, y2 = j2
+            for joint in Joint.joints:
+                if joint.x == x1 and joint.y == y1:
+                    joint1 = joint
+                if joint.x == x2 and joint.y == y2:
+                    joint2 = joint
+                  
+            Link(None, joint1, joint2)
 
-        for rotor in self.image_recognizer.rotor_assignment:
-            pass
+        for (x, y), rot_j in self.image_recognizer.rotor_assignment.items():
+            x_rot, y_rot = rot_j
+            for joint in Joint.joints:
+                if joint.x == x_rot and joint.y == y_rot:
+                    rot_joint = joint
+
+            Rotor(None, x, y, rot_joint)
+
+        self.update()
 
     def create_csv(self):
         data = []
@@ -278,11 +296,14 @@ if __name__ == "__main__":
     #link8 = Link(None, joint6, rotor0.rot_joint)
     #link9 = Link(None, joint6, joint4)
 
+    # Image Recgnition Test
+    mekanism.create_from_sketch("photo_image.jpeg") 
+
     # Animation Generation Test
     mekanism.create_animation()
     #mekanism.create_csv()
 
     # Database saving/loading Test
-    mekanism.store_data()
-    mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
-    print(mekanism_loaded)
+    #mekanism.store_data()
+    #mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
+    #print(mekanism_loaded)
