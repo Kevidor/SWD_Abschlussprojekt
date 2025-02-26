@@ -11,18 +11,24 @@ from serializable import Serializable
 from io import BytesIO
 
 class Mechanism(Serializable):
-    db_connector = DatabaseConnector().get_table("Project")
+    db_connector = DatabaseConnector().get_table("project")
     
-    def __init__(self, name ):
-        super().__init__(name)
-        self.joints = Joint.joints
-        self.links = Link.links
-        self.rotors = Rotor.rotors
+    def __init__(self, id, joints: list[Joint] = Joint.joints, links: list[Link] = Link.links, rotors: list[Rotor] = Rotor.rotors):
+        super().__init__(id)
+        self.joints = joints
+        self.links = links
+        self.rotors = rotors
 
         self.x = np.array([])
         self.A = np.array([])
         self.L = np.array([])
-        
+         
+    def __str__(self) -> str:
+        return F"Mechanism({self.joints}, {self.links}, {self.rotors})"
+    
+    def __repr__(self):
+        return self.__str__()
+
     def clear(self):
         self.joints = []
         self.links = []
@@ -42,17 +48,19 @@ class Mechanism(Serializable):
     def calc_DOF(self):
         self.update()
         n = len(self.joints)
-        #print(f"Joints: {n}")
         BC = len([j for j in self.joints if j.is_fixed])
-        #print(f"BC: {BC}")
         m = len(self.links)
-        #print(f"Links: {m}")
         dof = 2 * n - 2 * BC - m
+
+        #print(f"Joints: {n}")
+        #print(f"BC: {BC}")
+        #print(f"Links: {m}")
         #print(dof)
+
         return dof 
 
     def create_joint_matrix(self):
-        self.x = np.zeros((Joint.joints_count * 2, 1))
+        self.x = np.zeros((len(Joint.joints) * 2, 1))
         for i, joint in enumerate(self.joints):
             # joint x
             self.x[i * 2] = joint.x
@@ -60,7 +68,7 @@ class Mechanism(Serializable):
             self.x[i * 2 + 1] = joint.y
     
     def create_link_matrix(self):
-        self.A = np.zeros((Link.link_count * 2, Joint.joints_count * 2))
+        self.A = np.zeros((len(Link.links) * 2, len(Joint.joints) * 2))
         for i, link in enumerate(self.links):
             # link x
             self.A[i * 2, self.joints.index(link.joint1) * 2] = 1
@@ -74,15 +82,15 @@ class Mechanism(Serializable):
         self.create_link_matrix()
         
         l = self.A @ self.x
-        self.L = np.zeros((Link.link_count, 2))
-        for i in range(Link.link_count):
+        self.L = np.zeros((len(Link.links), 2))
+        for i in range(len(Link.links)):
             # length x
             self.L[i, 0] = l[i * 2].item()
             # length y
             self.L[i, 1] = l[i * 2 + 1].item()
 
-        l = np.zeros((Link.link_count, 1))
-        for i in range(Link.link_count):
+        l = np.zeros((len(Link.links), 1))
+        for i in range(len(Link.links)):
             l[i] = (self.L[i,0] ** 2 + self.L[i,1] ** 2) ** 0.5
 
         return l
@@ -120,6 +128,7 @@ class Mechanism(Serializable):
         ax.set_xlim(-100,100)
         ax.set_ylim(-100,100)
         ax.set_aspect("equal")
+
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
         rotor_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red rotors
         link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
@@ -133,6 +142,11 @@ class Mechanism(Serializable):
         def update(frame):
             """Update the mechanism at each frame"""
             self.optimize_positions(1)
+
+            x_vals = [joint.x for joint in self.joints]
+            y_vals = [joint.y for joint in self.joints]
+
+            joint_scatter.set_data(x_vals, y_vals)
 
             x_vals_rot = [rotor.x for rotor in self.rotors]
             y_vals_rot = [rotor.y for rotor in self.rotors]
@@ -158,7 +172,7 @@ class Mechanism(Serializable):
             return [joint_scatter] + [rotor_scatter] + link_lines + rotor_lines + list(trajectory_lines.values())
         
         save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"mechanismus_animation.gif")
-        ani = animation.FuncAnimation(fig, update, frames=360, interval=50, blit= True)
+        ani = animation.FuncAnimation(fig, update, frames=360, interval=25, blit= True)
         ani.save(filename=save_dir, writer="pillow", fps=30)
         print("GIF saved as mechanism_animation.gif")
 
@@ -178,7 +192,7 @@ class Mechanism(Serializable):
     
     def to_dict(self):
          return{
-                "name" : self.name,
+                "id" : self.id,
                 "Joints" : [joint.to_dict() for joint in self.joints],
                 "Links" : [link.to_dict() for link in self.links],
                 "rotor" : [rotor.to_dict() for rotor in self.rotors]
@@ -186,29 +200,21 @@ class Mechanism(Serializable):
          
     @classmethod
     def instantiate_from_dict(cls, data: dict):
-        return cls(data['name'], data['joint'], data['link'], data['rotor'])
-
-    def get_name(self) -> str:
-        return F"{self.id}"
-    
-    def __str__(self) -> str:
-        return F"Projectname {self.id} with this Konfiguration {self.joints}, {self.links}, {self.rotors}"
+        return cls(data['id'], data['joints'], data['links'], data['rotors'])
   
 if __name__ == "__main__":
     # Initialize Mechanism
-    mekanism = Mechanism(None)
+    mekanism = Mechanism("Mekanism0")
     
     # Viergelenk
     joint0 = Joint(None, "Joint0", 0, 0, True, False)
     joint1 = Joint(None, "Joint1", 10, 35, False, True)
     joint2 = Joint(None, "Joint2", -25, 10, False, True)
     
-    rotor0 = Rotor(-30, 0, joint2)
+    rotor0 = Rotor(None, -30, 0, joint2)
     
     link0 = Link(None, joint0, joint1)
     link1 = Link(None, joint1, rotor0.rot_joint)
-    
-    #print(mekanism.__dict__)
 
     # Strandbeest
     #joint0 = Joint(None, "Joint1", 0, 0, True, False)
@@ -219,7 +225,7 @@ if __name__ == "__main__":
     #joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
     #joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
     #
-    #rotor0 = Rotor(38, 7.8, joint1)
+    #rotor0 = Rotor(None, 38, 7.8, joint1)
     #
     #link0 = Link(None, joint0, joint2)
     #link1 = Link(None, joint0, joint3)
@@ -231,32 +237,10 @@ if __name__ == "__main__":
     #link7 = Link(None, joint5, joint6)
     #link8 = Link(None, joint6, rotor0.rot_joint)
     #link9 = Link(None, joint6, joint4)
-    
 
-    mekanism.create_animation()
+    #mekanism.create_animation()
+    mekanism.store_data()
+    mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
 
-    #mekanism.create_joint_matrix()
-    #mekanism.create_link_matrix()
-    #l = mekanism.create_lenght_matrix()
-    #
-    #print("\n Initial Mechanism:")
-    #print(f"x = \n{mekanism.x}")
-    #print(f"A = \n{mekanism.A}")
-    #print(f"L = \n{mekanism.L}")
-    #print(f"l = \n{l}")
-    #
-    #print("\n")
-    #rotor0.update_rotation(10)
-    #print(rotor0)
-    #
-    #mekanism.create_joint_matrix()
-    #mekanism.create_link_matrix()
-    #l = mekanism.create_lenght_matrix()
-    #
-    #print("\n Rotated Mechanism:")
-    #print(f"x = \n{mekanism.x}")
-    #print(f"A = \n{mekanism.A}")
-    #print(f"L = \n{mekanism.L}")
-    #print(f"l = \n{l}")
-
-    #print(mekanism.calc_error(10))
+    #print(mekanism_loaded)
+    print(mekanism_loaded)
