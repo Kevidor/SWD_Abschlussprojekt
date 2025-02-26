@@ -8,7 +8,6 @@ import matplotlib.animation as animation
 from mechanism_components import Joint, Link, Rotor
 from database import DatabaseConnector
 from serializable import Serializable
-from io import BytesIO
 
 class Mechanism(Serializable):
     db_connector = DatabaseConnector().get_table("project")
@@ -125,14 +124,16 @@ class Mechanism(Serializable):
     
     def create_animation(self ):
         fig, ax = plt.subplots()
+        fig.add_gridspec
         ax.set_xlim(-100,100)
         ax.set_ylim(-100,100)
         ax.set_aspect("equal")
+        plt.grid()
 
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
         rotor_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red rotors
         link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
-        rotor_lines = [ax.plot([], [], 'g--')[0] for _ in self.links]  # Green rot_lines
+        rotor_lines = [ax.plot([], [], 'b--')[0] for _ in self.links]  # Green rot_lines
 
         # Dictionary to store past positions of drawn joints
         drawn_joints = [i for i, joint in enumerate(self.joints) if joint.is_drawn]
@@ -238,9 +239,10 @@ if __name__ == "__main__":
     #link8 = Link(None, joint6, rotor0.rot_joint)
     #link9 = Link(None, joint6, joint4)
 
-    #mekanism.create_animation()
+    # Animation Generation Test
+    mekanism.create_animation()
+
+    # Database saving/loading Test
     mekanism.store_data()
     mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
-
-    #print(mekanism_loaded)
     print(mekanism_loaded)
