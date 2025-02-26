@@ -44,8 +44,8 @@ class Serializable(ABC):
                 num_to_return = len(result)
 
             data = result[:num_to_return]
-            joint_results = [cls.instantiate_from_dict(d) for d in data]
-            return joint_results if num_to_return > 1 else joint_results[0]
+            results = [cls.instantiate_from_dict(d) for d in data]
+            return results if num_to_return > 1 else results[0]
         else:
             return None
 
@@ -54,8 +54,8 @@ class Serializable(ABC):
     def find_all(cls) -> list[Self]:
         # Load all data from the database and create instances of the Joint Class
         entry = []
-        for Joint_data in cls.db_connector.all():
-            entry.append(cls.instantiate_from_dict(Joint_data))
+        for data in cls.db_connector.all():
+            entry.append(cls.instantiate_from_dict(data))
         return entry
 
     # String representation of the class

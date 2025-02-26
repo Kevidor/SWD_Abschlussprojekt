@@ -1,1 +1,744 @@
-{"project": {"1": {"id": "Mekanism0", "joints": [{"id": null, "name": "Joint0", "x": 0, "y": 0, "is_fixed": true, "is_drawn": false}, {"id": null, "name": "Joint1", "x": 9.709788063361891, "y": 35.08161947538876, "is_fixed": false, "is_drawn": true}, {"id": null, "name": "Joint2", "x": -25.352040831929532, "y": 10.168405753703464, "is_fixed": true, "is_drawn": true}], "links": [{"id": null, "joint1": {"id": null, "name": "Joint0", "x": 0, "y": 0, "is_fixed": true, "is_drawn": false}, "joint2": {"id": null, "name": "Joint1", "x": 9.709788063361891, "y": 35.08161947538876, "is_fixed": false, "is_drawn": true}, "line_style": "-", "line_color": "black"}, {"id": null, "joint1": {"id": null, "name": "Joint1", "x": 9.709788063361891, "y": 35.08161947538876, "is_fixed": false, "is_drawn": true}, "joint2": {"id": null, "name": "Joint2", "x": -25.352040831929532, "y": 10.168405753703464, "is_fixed": true, "is_drawn": true}, "line_style": "-", "line_color": "black"}], "rotors": [{"id": null, "x": -30, "y": 0, "rot_joint": {"id": null, "name": "Joint2", "x": -25.352040831929532, "y": 10.168405753703464, "is_fixed": true, "is_drawn": true}, "lenght": 11.180339887498949, "angle": 425.434948822922}], "x": [[0.0], [0.0], [9.709788063361891], [35.08161999814563], [-25.352040831929532], [10.168405753703464]], "A": [[1.0, 0.0, -1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, -1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0, -1.0, 0.0], [0.0, 0.0, 0.0, 1.0, 0.0, -1.0]], "L": [[-9.709788063361891, -35.08161999814563], [35.06182889529143, 24.913214244442162]]}, "2": {"id": "Mekanism1", "joints": [{"id": null, "name": "Joint0", "x": 0, "y": 0, "is_fixed": true, "is_drawn": false}, {"id": null, "name": "Joint1", "x": 10, "y": 35, "is_fixed": true, "is_drawn": false}], "links": [{"id": null, "joint1": {"id": null, "name": "Joint0", "x": 0, "y": 0, "is_fixed": true, "is_drawn": false}, "joint2": {"id": null, "name": "Joint1", "x": 10, "y": 35, "is_fixed": false, "is_drawn": true}, "line_style": "-", "line_color": "black"}], "rotors": [{"id": null, "x": -30, "y": 0, "rot_joint": {"id": null, "name": "Joint1", "x": 10, "y": 35, "is_fixed": true, "is_drawn": true}, "lenght": 11.180339887498949, "angle": 63.43494882292201}], "x": [], "A": [], "L": []}}}
+{
+    "project": {
+        "12": {
+            "id": "Viergelenk",
+            "joints": [
+                {
+                    "id": 0,
+                    "name": "Start",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "is_fixed": true,
+                    "is_drawn": false
+                },
+                {
+                    "id": 1,
+                    "name": "None",
+                    "x": 5.6491538606829526,
+                    "y": 35.95952130440841,
+                    "is_fixed": false,
+                    "is_drawn": false
+                },
+                {
+                    "id": 2,
+                    "name": "None",
+                    "x": -29.49963914254498,
+                    "y": 11.16913779180501,
+                    "is_fixed": true,
+                    "is_drawn": true
+                }
+            ],
+            "links": [
+                {
+                    "id": 0,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 5.6491538606829526,
+                        "y": 35.95952130440841,
+                        "is_fixed": false,
+                        "is_drawn": false
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 1,
+                    "joint1": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 5.6491538606829526,
+                        "y": 35.95952130440841,
+                        "is_fixed": false,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 2,
+                        "name": "None",
+                        "x": -29.49963914254498,
+                        "y": 11.16913779180501,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                }
+            ],
+            "rotors": [
+                {
+                    "id": 0,
+                    "x": -30,
+                    "y": 0,
+                    "rot_joint": {
+                        "id": 2,
+                        "name": "None",
+                        "x": -29.49963914254498,
+                        "y": 11.16913779180501,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "lenght": 11.180339887498949,
+                    "angle": 4407.434948822922
+                }
+            ],
+            "x": [
+                [
+                    0.0
+                ],
+                [
+                    0.0
+                ],
+                [
+                    5.6491538606829526
+                ],
+                [
+                    35.959521840247035
+                ],
+                [
+                    -29.49963914254498
+                ],
+                [
+                    11.16913779180501
+                ]
+            ],
+            "A": [
+                [
+                    1.0,
+                    0.0,
+                    -1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    -1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    -1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    -1.0
+                ]
+            ],
+            "L": [
+                [
+                    -5.6491538606829526,
+                    -35.959521840247035
+                ],
+                [
+                    35.14879300322793,
+                    24.790384048442025
+                ]
+            ]
+        },
+        "13": {
+            "id": "Strandbeest",
+            "joints": [
+                {
+                    "id": 0,
+                    "name": "Start",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "is_fixed": true,
+                    "is_drawn": false
+                },
+                {
+                    "id": 1,
+                    "name": "None",
+                    "x": 49.97,
+                    "y": 1.55,
+                    "is_fixed": true,
+                    "is_drawn": true
+                },
+                {
+                    "id": 2,
+                    "name": "None",
+                    "x": 18.2,
+                    "y": 37.3,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 3,
+                    "name": "None",
+                    "x": -34.82,
+                    "y": 19.9,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 4,
+                    "name": "None",
+                    "x": -30.5,
+                    "y": -19.22,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 5,
+                    "name": "None",
+                    "x": -19.33,
+                    "y": -84.03,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 6,
+                    "name": "None",
+                    "x": 0.67,
+                    "y": -39.3,
+                    "is_fixed": false,
+                    "is_drawn": true
+                }
+            ],
+            "links": [
+                {
+                    "id": 0,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 2,
+                        "name": "None",
+                        "x": 18.2,
+                        "y": 37.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 1,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 3,
+                        "name": "None",
+                        "x": -34.82,
+                        "y": 19.9,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 2,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 3,
+                    "joint1": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 49.97,
+                        "y": 1.55,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 2,
+                        "name": "None",
+                        "x": 18.2,
+                        "y": 37.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 4,
+                    "joint1": {
+                        "id": 2,
+                        "name": "None",
+                        "x": 18.2,
+                        "y": 37.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 3,
+                        "name": "None",
+                        "x": -34.82,
+                        "y": 19.9,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 5,
+                    "joint1": {
+                        "id": 3,
+                        "name": "None",
+                        "x": -34.82,
+                        "y": 19.9,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 4,
+                        "name": "None",
+                        "x": -30.5,
+                        "y": -19.22,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 6,
+                    "joint1": {
+                        "id": 4,
+                        "name": "None",
+                        "x": -30.5,
+                        "y": -19.22,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 5,
+                        "name": "None",
+                        "x": -19.33,
+                        "y": -84.03,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 7,
+                    "joint1": {
+                        "id": 5,
+                        "name": "None",
+                        "x": -19.33,
+                        "y": -84.03,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 8,
+                    "joint1": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 49.97,
+                        "y": 1.55,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 9,
+                    "joint1": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 4,
+                        "name": "None",
+                        "x": -30.5,
+                        "y": -19.22,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                }
+            ],
+            "rotors": [
+                {
+                    "id": 0,
+                    "x": 38,
+                    "y": 7,
+                    "rot_joint": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 49.97,
+                        "y": 1.55,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "lenght": 13.152315385512923,
+                    "angle": -24.48000799709849
+                }
+            ],
+            "x": [],
+            "A": [],
+            "L": []
+        },
+        "14": {
+            "id": "test",
+            "joints": [
+                {
+                    "id": 0,
+                    "name": "Start",
+                    "x": 0.0,
+                    "y": 0.0,
+                    "is_fixed": true,
+                    "is_drawn": false
+                },
+                {
+                    "id": 1,
+                    "name": "None",
+                    "x": 49.97,
+                    "y": 1.55,
+                    "is_fixed": true,
+                    "is_drawn": true
+                },
+                {
+                    "id": 2,
+                    "name": "None",
+                    "x": 18.2,
+                    "y": 37.3,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 3,
+                    "name": "None",
+                    "x": -34.82,
+                    "y": 19.9,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 4,
+                    "name": "None",
+                    "x": -30.5,
+                    "y": -19.22,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 5,
+                    "name": "None",
+                    "x": -19.33,
+                    "y": -84.03,
+                    "is_fixed": false,
+                    "is_drawn": true
+                },
+                {
+                    "id": 6,
+                    "name": "None",
+                    "x": 0.67,
+                    "y": -39.3,
+                    "is_fixed": false,
+                    "is_drawn": true
+                }
+            ],
+            "links": [
+                {
+                    "id": 0,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 2,
+                        "name": "None",
+                        "x": 18.2,
+                        "y": 37.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 1,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 3,
+                        "name": "None",
+                        "x": -34.82,
+                        "y": 19.9,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 2,
+                    "joint1": {
+                        "id": 0,
+                        "name": "Start",
+                        "x": 0.0,
+                        "y": 0.0,
+                        "is_fixed": true,
+                        "is_drawn": false
+                    },
+                    "joint2": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 3,
+                    "joint1": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 49.97,
+                        "y": 1.55,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 2,
+                        "name": "None",
+                        "x": 18.2,
+                        "y": 37.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 4,
+                    "joint1": {
+                        "id": 2,
+                        "name": "None",
+                        "x": 18.2,
+                        "y": 37.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 3,
+                        "name": "None",
+                        "x": -34.82,
+                        "y": 19.9,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 5,
+                    "joint1": {
+                        "id": 3,
+                        "name": "None",
+                        "x": -34.82,
+                        "y": 19.9,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 4,
+                        "name": "None",
+                        "x": -30.5,
+                        "y": -19.22,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 6,
+                    "joint1": {
+                        "id": 4,
+                        "name": "None",
+                        "x": -30.5,
+                        "y": -19.22,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 5,
+                        "name": "None",
+                        "x": -19.33,
+                        "y": -84.03,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 7,
+                    "joint1": {
+                        "id": 5,
+                        "name": "None",
+                        "x": -19.33,
+                        "y": -84.03,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 8,
+                    "joint1": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 49.97,
+                        "y": 1.55,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                },
+                {
+                    "id": 9,
+                    "joint1": {
+                        "id": 6,
+                        "name": "None",
+                        "x": 0.67,
+                        "y": -39.3,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "joint2": {
+                        "id": 4,
+                        "name": "None",
+                        "x": -30.5,
+                        "y": -19.22,
+                        "is_fixed": false,
+                        "is_drawn": true
+                    },
+                    "line_style": "-",
+                    "line_color": "black"
+                }
+            ],
+            "rotors": [
+                {
+                    "id": 0,
+                    "x": 38,
+                    "y": 7,
+                    "rot_joint": {
+                        "id": 1,
+                        "name": "None",
+                        "x": 49.97,
+                        "y": 1.55,
+                        "is_fixed": true,
+                        "is_drawn": true
+                    },
+                    "lenght": 13.152315385512923,
+                    "angle": -24.48000799709849
+                }
+            ],
+            "x": [],
+            "A": [],
+            "L": []
+        }
+    }
+}

@@ -39,10 +39,14 @@ class Mechanism(Serializable):
         self.A = np.array([])
         self.L = np.array([])
         
-    def update(self):
-        self.joints = Joint.joints
-        self.links = Link.links
-        self.rotors = Rotor.rotors
+    def update(self, joints: list[Joint] = Joint.joints, links: list[Link] = Link.links, rotors: list[Rotor] = Rotor.rotors):
+        self.joints = joints
+        self.links = links
+        self.rotors = rotors
+        
+        print(self.joints)
+        print(self.links)
+        print(self.rotors)
 
     def calc_DOF(self):
         self.update()
@@ -51,11 +55,10 @@ class Mechanism(Serializable):
         m = len(self.links)
         dof = 2 * n - 2 * BC - m
 
-        #print(f"Joints: {n}")
-        #print(f"BC: {BC}")
-        #print(f"Links: {m}")
-        #print(dof)
-
+        print(f"Joints: {n}")
+        print(f"BC: {BC}")
+        print(f"Links: {m}")
+        print(dof)
         return dof 
 
     def create_joint_matrix(self):
@@ -217,7 +220,8 @@ class Mechanism(Serializable):
     @classmethod
     def instantiate_from_dict(cls, data: dict):
         return cls(data['id'], data['joints'], data['links'], data['rotors'])
-  
+    
+
 if __name__ == "__main__":
     # Initialize Mechanism
     mekanism = Mechanism("Mekanism0")
@@ -261,4 +265,6 @@ if __name__ == "__main__":
     # Database saving/loading Test
     mekanism.store_data()
     mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
+    mekanism_all = Mechanism.find_all()
+    print(mekanism_all)
     print(mekanism_loaded)
