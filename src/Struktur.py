@@ -156,7 +156,7 @@ def run():
                 if st.button("Check Degrees of freedom"):  
                     st.session_state.mechanism.clear()
                     for index_joint, row_joint in st.session_state.df_joint.iterrows():
-                        st.info(f"{row_joint}")
+                        #st.info(f"{row_joint}")
                         Joint(id=int(index_joint),
                               name=str(row_joint["Name"]), 
                               x=float(row_joint["x"]), 
@@ -178,30 +178,41 @@ def run():
                         st.info(Link.links)
                     
                     for index_rotor, row_rotor in st.session_state.rotor.iterrows():
-                        rotor_joint_index = int(row_rotor["joint"])
+                        
+                        rotor_joint_index = float(row_rotor["joint"])
                         joint_rot = None 
                         for j in Joint.joints:
                             if j.id == rotor_joint_index:
                                 joint_rot = j
-                        Rotor(id=int(index_rotor),x=int(row_rotor["x"]), y=int(row_rotor["y"]), rot_joint=joint_rot)
+                        Rotor(id=int(index_rotor),x=float(row_rotor["x"]), y=float(row_rotor["y"]), rot_joint=joint_rot)
                         st.info(Rotor.rotors)
                         
                     st.session_state.mechanism.update(Joint.joints,Link.links, Rotor.rotors)
                     st.session_state.mechanism = Mechanism("", Joint.joints, Link.links, Rotor.rotors)
                     
                     st.info(st.session_state.mechanism.calc_DOF())
-                    st.info(st.session_state.mechanism)
+                    #st.info(st.session_state.mechanism)
                     
                     st.session_state.disable_sim = False if st.session_state.mechanism.calc_DOF() == 0 else True
                     st.write(Rotor.rotors)
                     st.info(st.session_state.disable_sim)
                 
+                project_list = []
                 for project_id in st.session_state.load_project:
-                    project_list = []
                     project_list.append(str(project_id.id))
-                st.write(project_list)
-                selected_projekt = st.selectbox("Select your your Project", options= project_list)
+                #st.write(project_list)
+                if project_list == []:
+                    st.info("No Projekt loaded")
+                    selected_projekt = ""
+                else:
+                    selected_projekt = st.selectbox("Select your your Project", options= project_list)
                 
+                if selected_projekt != "":
+                    for project_id in st.session_state.load_project:
+                        if selected_projekt == project_id.id:
+                            st.info(project_id.joints)
+                            
+                            
                 project_name = st.text_input("Enter your Project name")
                 
                 cols_project = st.columns(2)
@@ -218,7 +229,6 @@ def run():
                         st.session_state.load_project = Mechanism.find_all()
                         print(st.session_state.load_project)
                         st.success("loaded succesfully")    
-                        sleep(2)
                         st.rerun()
                         
             else:
