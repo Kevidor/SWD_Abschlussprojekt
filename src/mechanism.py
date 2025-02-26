@@ -1,4 +1,5 @@
 from mechanism_components import Joint, Link, Rotor
+from image_recognizer import ImageRecognizer
 import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
@@ -13,6 +14,9 @@ class Mechanism:
         self.x = np.array([])
         self.A = np.array([])
         self.L = np.array([])
+
+        self.image_recognizer = ImageRecognizer()
+        self.bounds = []
 
     def clear(self):
         self.joints = []
@@ -96,8 +100,17 @@ class Mechanism:
     
     def create_animation(self):
         fig, ax = plt.subplots()
-        ax.set_xlim(0, 2000)
-        ax.set_ylim(-2000, 0)
+        
+        if self.bounds:
+            x_min, x_max, y_min, y_max = self.bounds
+        else:
+            x_min, x_max, y_min, y_max = 100, 100, 100, 100
+
+        margin_x = (x_max - x_min) * 0.2
+        margin_y = (y_max - y_min) * 0.2
+
+        ax.set_xlim(x_min - margin_x, x_max + margin_x)
+        ax.set_ylim(y_min - margin_y, y_max + margin_y)
         ax.set_aspect('equal')
 
         joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
@@ -137,6 +150,19 @@ class Mechanism:
 
         print("GIF saved as mechanism_animation.gif")
 
+    def create_from_sketch(self, img_path: str):
+        self.image_recognizer.load_img(img_path)
+        self.image_recognizer.assign_components(60)
+
+        for joint in self.image_recognizer.joint_assignment:
+            pass
+
+        for link in self.image_recognizer.link_assignment:
+            pass
+
+        for rotor in self.image_recognizer.rotor_assignment:
+            pass
+
 
 if __name__ == "__main__":
     # Initialize Mechanism
@@ -152,7 +178,7 @@ if __name__ == "__main__":
     link0 = Link(None, joint0, joint1)
     link1 = Link(None, joint1, rotor0.rot_joint)
 
-    print(mekanism.__dict__)
+    #print(mekanism.__dict__)
 
     # Strandbeest
     #joint0 = Joint(None, "Joint1", 0, 0, True, False)
@@ -178,7 +204,7 @@ if __name__ == "__main__":
     
     #print(f"Remaining DOF: {mekanism.calc_DOF()}")
     
-    #mekanism.create_animation()
+    mekanism.create_animation()
 
     #mekanism.create_joint_matrix()
     #mekanism.create_link_matrix()

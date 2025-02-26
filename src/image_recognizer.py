@@ -4,15 +4,13 @@ from mechanism import Mechanism
 from mechanism_components import Joint, Link, Rotor
 
 class ImageRecognizer:
-    def __init__(self, img_path:str = None):
-        if not img_path == None:
-            self.img = cv2.imread(img_path)
-        else:
-            self.img = img_path
+    def __init__(self):
+        self.img_path = None
         self.circle_pos = []
         self.line_pos = []
-        self.link_assignment = {}
         self.joint_assignment = []
+        self.link_assignment = {}
+        self.rotot_assignment = {}
 
     def load_img(self, img_path:str):
         self.img_path = cv2.imread(img_path)
@@ -138,9 +136,14 @@ class ImageRecognizer:
             print(f"Line_positions:\n{self.line_pos}")
             self.show_image(img_temp, "Lines:")
 
-    def assign_links(self, radius: int = 10):
+    def assign_components(self, radius: int = 60):
         link_assignments = {}
         joint_assignments = []
+        unassigned_circles = []
+        rotor_assignment = {}
+
+        self.recognize_circles()
+        self.recognize_lines()
 
         for line in self.line_pos:
             link_assignments[line] = [None, None]
@@ -162,17 +165,30 @@ class ImageRecognizer:
                     link_assignments[line][1] = (circle_x, circle_y)
                     assigned_to_line = True
 
-            if not assigned_to_line:
+            if assigned_to_line:
                 joint_assignments.append((circle_x, circle_y))
+            else:
+                unassigned_circles.append((circle_x, circle_y))
+
+        for rotor in unassigned_circles:
+            rotor_x, rotor_y = rotor
+            min_distance = float("inf")
+            closest_joint = None
+
+            for joint in joint_assignments:
+                joint_x, joint_y = joint
+                distance = np.sqrt((rotor_x - joint_x) ** 2 + (rotor_y - joint_y) ** 2)
+
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_joint = joint
+
+            if closest_joint:
+                rotor_assignment[rotor] = closest_joint
 
         self.link_assignment = link_assignments
         self.joint_assignment = joint_assignments
-    
-    def create_Joints(self):
-        pass
-
-    def create_Links(self):
-        pass
+        self.rotor_assignment = rotor_assignment
 
 if __name__ == "__main__":
     image_recognizer = ImageRecognizer("photo_image.jpeg")
@@ -181,24 +197,35 @@ if __name__ == "__main__":
     image_recognizer.show_image(image_recognizer.img)
     image_recognizer.recognize_circles(True)
     image_recognizer.recognize_lines(True)
-    image_recognizer.assign_links(60)
+    image_recognizer.assign_components(60)
 
-    print(f"\nLink_Assignment: {image_recognizer.link_assignment}")
     print(f"\nJoint_Assignment: {image_recognizer.joint_assignment}")
+    print(f"\nLink_Assignment: {image_recognizer.link_assignment}")
+    print(f"\nRotor_Assignment: {image_recognizer.rotor_assignment}")
 
+
+if __name__ == "__main__":
     img = np.copy(image_recognizer.img)
+
+    # Draw detected links and assigned joints
     for line, assignments in image_recognizer.link_assignment.items():
         (start_x, start_y), (end_x, end_y) = line
         cv2.line(img, (start_x, start_y), (end_x, end_y), (255, 0, 0), 2)  # Blue lines
         
-        # Draw assigned circles
+        # Draw assigned joints on the links
         if assignments[0] is not None:
-            cv2.circle(img, assignments[0], 5, (0, 0, 255), -1)  # Red for first assignment
+            cv2.circle(img, assignments[0], 5, (0, 0, 255), -1)  # Red for first joint
         if assignments[1] is not None:
-            cv2.circle(img, assignments[1], 5, (0, 0, 255), -1)  # Red for second assignment
-    
-    # Draw joint assignments
-    for joint in image_recognizer.joint_assignment:
-        cv2.circle(img, joint, 5, (255, 255, 0), -1)  # Yellow for joint assignments
+            cv2.circle(img, assignments[1], 5, (0, 0, 255), -1)  # Red for second joint
+
+    # Draw all joints that were assigned to links
+    #for joint in image_recognizer.joint_assignment:
+    #    cv2.circle(img, joint, 5, (255, 255, 0), -1)  # Yellow for joints connected to links
+
+    # Draw rotors (unassigned circles mapped to closest joint)
+    for rotor, closest_joint in image_recognizer.rotor_assignment.items():
+        cv2.circle(img, rotor, 8, (0, 255, 255), -1)  # Cyan for rotor
+        cv2.line(img, rotor, closest_joint, (0, 255, 255), 1, cv2.LINE_AA)  # Line to closest joint
 
     image_recognizer.show_image(img, "Check")
+
