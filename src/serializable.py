@@ -15,24 +15,24 @@ class Serializable(ABC):
         pass
         
     def store_data(self):
-        print("Storing data...")
+        print("[DB] Storing data...")
 
         query = Query()
         # upsert: https://tinydb.readthedocs.io/en/latest/usage.html#upserting-data
         result = self.db_connector.upsert(self.__to_dict(), query.id == self.id)
         if result:
-            print("Data updated.")
+            print("[DB] Data updated.")
         else:
-            print("Data inserted.")
+            print("[DB] Data inserted.")
 
     
     def delete(self):
-        print("Deleting data...")
+        print("[DB] Deleting data...")
         query = Query()
-        if self.db_connector.remove(query.id == self.id): # Joint id muss hier rein
-            print("Data deleted.")
+        if self.db_connector.remove(query.id == self.id):
+            print("[DB] Data deleted.")
         else:
-            print("Data not found.")
+            print("[DB] Data not found.")
     
     @classmethod
     def find_by_attribute(cls, by_attribute: str, attribute_value: str, num_to_return=1) -> Self | list[Self]:
