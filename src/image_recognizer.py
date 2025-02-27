@@ -8,7 +8,7 @@ class ImageRecognizer:
         self.line_pos = []
         self.joint_assignment = []
         self.link_assignment = {}
-        self.rotot_assignment = {}
+        self.rotor_assignment = {}
 
     def load_img(self, img_path:str):
         self.img = cv2.imread(img_path)
@@ -168,7 +168,7 @@ class ImageRecognizer:
         self.line_pos = [((x1, self.img.shape[0] - y1), (x2, self.img.shape[0] - y2)) for (x1, y1), (x2, y2) in self.line_pos]
 
 
-    def assign_components(self, radius: int = 60):
+    def assign_components(self, radius: int = 60, debug: bool = False):
         link_assignments = {}
         joint_assignments = []
         unassigned_circles = []
@@ -176,7 +176,7 @@ class ImageRecognizer:
 
         self.recognize_circles()
         self.recognize_lines()
-        self.flip_coordinates()
+        if not debug: self.flip_coordinates()
 
         for line in self.line_pos:
             link_assignments[line] = [None, None]
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     image_recognizer.show_image(image_recognizer.img)
     image_recognizer.recognize_circles(True)
     image_recognizer.recognize_lines(True)
-    image_recognizer.assign_components(60)
+    image_recognizer.assign_components(60,True)
 
     print(f"\nJoint_Assignment: {image_recognizer.joint_assignment}")
     print(f"\nLink_Assignment: {image_recognizer.link_assignment}")

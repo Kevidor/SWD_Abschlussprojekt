@@ -135,11 +135,13 @@ class Mechanism(Serializable):
         if self.bounds:
             x_min, x_max, y_min, y_max = self.bounds
             self.bounds = []
+            margin_x = (x_max - x_min) * 0.4
+            margin_y = (y_max - y_min) * 0.4
         else:
-            x_min, x_max, y_min, y_max = 100, 100, 100, 100
-
-        margin_x = (x_max - x_min) * 0.4
-        margin_y = (y_max - y_min) * 0.4
+            x_min, x_max, y_min, y_max = -100, 100, -100, 100
+            margin_x = 0
+            margin_y = 0
+        
 
         ax.set_xlim(x_min - margin_x, x_max + margin_x)
         ax.set_ylim(y_min - margin_y, y_max + margin_y)
@@ -196,7 +198,7 @@ class Mechanism(Serializable):
         self.image_recognizer.load_img(img_path)
         self.image_recognizer.assign_components(60)
         self.bounds = self.image_recognizer.get_bounds()
-        self.clear()
+        #self.clear()
 
         for joint in self.image_recognizer.joint_assignment:
             x, y = joint

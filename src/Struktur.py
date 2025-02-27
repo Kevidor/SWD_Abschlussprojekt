@@ -70,7 +70,7 @@ def run():
             if st.session_state.df_joint.empty:
                 if st.button("Add first row for joint"):
                     st.session_state.df_joint = pd.DataFrame([{"name": "fix Joint", "x": 10, "y": 10, "is_fixed": True,"is_drawn":False}])
-                    st.experimental_set_query_params(updated="1")
+                    st.rerun()
             else:
                 edit_df_joint = st.data_editor(st.session_state.df_joint, 
                                                column_config = {
@@ -83,13 +83,13 @@ def run():
                                                 hide_index=False,
                                                 use_container_width=True)	
                 
-            if not edit_df_joint.equals(st.session_state.df_joint):
-                st.session_state.df_joint = edit_df_joint
-                st.session_state.df_joint.reset_index(drop=True, inplace=True)
-                st.rerun()
+                if not edit_df_joint.equals(st.session_state.df_joint):
+                    st.session_state.df_joint = edit_df_joint
+                    st.session_state.df_joint.reset_index(drop=True, inplace=True)
+                    st.rerun()
                 #Debugging
-                for index,row in st.session_state.df_joint.iterrows():
-                    st.write(f"Index: {index}, x: {row['x']}, y: {row['y']}, is_fixed: {type(row['is_fixed'])}, is_drawn: {type(row['is_drawn'])}")
+                #for index,row in st.session_state.df_joint.iterrows():
+                #    st.write(f"Index: {index}, x: {row['x']}, y: {row['y']}, is_fixed: {type(row['is_fixed'])}, is_drawn: {type(row['is_drawn'])}")
 
             if len(st.session_state.df_joint) != 0:
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -109,11 +109,11 @@ def run():
                                                    num_rows="dynamic",
                                                    hide_index=False,
                                                    use_container_width=True)
-                if  not edit_df_rotor.equals(st.session_state.rotor):
-                    st.session_state.rotor_valid = True
-                    st.session_state.rotor = edit_df_rotor
-                    st.session_state.rotor.reset_index(drop=True, inplace=True)
-                    st.rerun()
+                    if  not edit_df_rotor.equals(st.session_state.rotor):
+                        st.session_state.rotor_valid = True
+                        st.session_state.rotor = edit_df_rotor
+                        st.session_state.rotor.reset_index(drop=True, inplace=True)
+                        st.rerun()
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
                                                                 #Link
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------               
@@ -134,32 +134,33 @@ def run():
                                                         hide_index=False,
                                                         use_container_width=True)
                 
-                if not edit_df_link.equals(st.session_state.df_link):
-                    st.session_state.valid = True
-                    
-                    for index, row in edit_df_link.iterrows():
-                        if row["joint1"] is None or row["joint2"] is None:
-                            continue
-                        else:
-                            if row["joint1"] == row["joint2"]:
-                                st.warning(f"⚠️ Please choose different joints for Link{index}")
-                                st.session_state.valid = False
-                                st.session_state.is_correct = False
+                    if not edit_df_link.equals(st.session_state.df_link):
+                        st.session_state.valid = True
+
+                        for index, row in edit_df_link.iterrows():
+                            if row["joint1"] is None or row["joint2"] is None:
+                                    st.warning("⚠️ Missing joints!")
+                                    st.session_state.valid = False
                             else:
-                                st.session_state.is_correct = True
-                    
-                    if st.session_state.is_correct:    
-                        st.session_state.df_link = edit_df_link
-                        st.session_state.df_link.reset_index(drop=True, inplace=True)
-                        st.rerun()
+                                if row["joint1"] == row["joint2"]:
+                                    st.warning(f"⚠️ Please choose different joints for Link{index}")
+                                    st.session_state.valid = False
+                                    st.session_state.is_correct = False
+                                else:
+                                    st.session_state.is_correct = True
+
+                        if st.session_state.is_correct:    
+                            st.session_state.df_link = edit_df_link
+                            st.session_state.df_link.reset_index(drop=True, inplace=True)
+                            st.rerun()
                 
-                for index,row in st.session_state.df_link.iterrows():
-                    st.write(f"Index: {type(index)}, Joint1: {type(row['joint1'])}, Joint2: {type(row['joint2'])}")
+                #for index,row in st.session_state.df_link.iterrows():
+                #    st.write(f"Index: {type(index)}, Joint1: {type(row['joint1'])}, Joint2: {type(row['joint2'])}")
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
                                                                 #Action_buttom
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------- 
                 
-                if st.button("Check Degrees of freedom"):  
+                if st.button("Check Degrees of freedom", use_container_width=True):  
                     st.session_state.mechanism.clear()
                     for index_joint, row_joint in st.session_state.df_joint.iterrows():
                         #st.info(f"{row_joint}")
@@ -185,7 +186,10 @@ def run():
                         for j in Joint.joints:
                             if j.id == rotor_joint_index:
                                 joint_rot = j
-                        Rotor(id=int(index_rotor),x=int(row_rotor["x"]), y=int(row_rotor["y"]), rot_joint=joint_rot)
+                        if pd.isna(row_rotor["x"]) or pd.isna(row_rotor["y"]):
+                            st.error("Error: x or y is NaN for Rotor")
+                        else:        
+                            Rotor(id=int(index_rotor),x=int(row_rotor["x"]), y=int(row_rotor["y"]), rot_joint=joint_rot)
                     #st.info(Rotor.rotors)
                     
                     st.session_state.mechanism = Mechanism("", Joint.joints, Link.links, Rotor.rotors)
@@ -194,7 +198,7 @@ def run():
                     
                     st.session_state.disable_sim = False if st.session_state.mechanism.calc_DOF() == 0 else True
                     
-                    st.info(st.session_state.disable_sim)
+                    #st.info(st.session_state.disable_sim)
                 
                         
                 project_name = st.text_input("Enter your Project name")
@@ -202,7 +206,7 @@ def run():
                 cols_project = st.columns(3)
                     
                 with cols_project[0]:
-                    if st.button("Save Konfiguration", disabled= st.session_state.disable_sim):
+                    if st.button("Save Konfiguration", disabled= st.session_state.disable_sim, use_container_width=True):
                             st.session_state.mechanism.id = project_name
                             st.session_state.mechanism.store_data()
                             st.success("You saved your Project")
@@ -214,7 +218,7 @@ def run():
                     st.session_state.selected_project = st.selectbox("Select Project ID", options=[find_project.id for find_project in Mechanism.find_all()])
                     
 
-                    if st.button("Load Project"):
+                    if st.button("Load Project", use_container_width=True):
                         for project_data in st.session_state.available_projects:
                             if project_data.id == st.session_state.selected_project:
                                 found_project = project_data
@@ -224,42 +228,42 @@ def run():
                         st.session_state.df_joint = pd.DataFrame(found_project.joints)
                             
                         for link in found_project.links:
-                            if isinstance(link["joint1"], Joint):
-                                link["joint1"] = link["joint1"].id
-                                st.info(link["joint1"].id)
-                            
-                            if isinstance(link["joint2"], Joint):
-                                link["joint2"] =int( link["joint2"].id)
-                            link.pop("id", None)
-                            #st.info(link)
-                            st.session_state.df_link = pd.DataFrame(found_project.links)
-                            
+                            if isinstance(link.get("joint1"), dict) and "id" in link["joint1"]:
+                                link["joint1"] = link["joint1"]["id"]
+                            else:
+                                link["joint1"] = None  # Fehler vermeiden, wenn kein `id`-Wert existiert
+
+                            if isinstance(link.get("joint2"), dict) and "id" in link["joint2"]:
+                                link["joint2"] = link["joint2"]["id"]
+                            else:
+                                link["joint2"] = None
+
+                        st.session_state.df_link = pd.DataFrame(found_project.links)
+
                         for rotor in found_project.rotors:
-                            if isinstance(rotor["rot_joint"], Joint):
-                                rotor["rot_joint"] = rotor.id
-                                st.info(rotor.id)
-                            rotor.pop("id",None)
-                            #st.info(rotor.id)
-                            st.session_state.df_rotor = pd.DataFrame(found_project.rotors)
+                            if isinstance(rotor.get("rot_joint"), dict) and "id" in rotor["rot_joint"]:
+                                rotor["rot_joint"] = rotor["rot_joint"]["id"]
+                            else:
+                                rotor["rot_joint"] = None  # Falls kein Wert vorhanden ist
+
+                        st.session_state.rotor = pd.DataFrame(found_project.rotors)
 
                         st.session_state.project_loaded = True
                         st.success("Project loaded successfully")
-                        st.write("Joints:", found_project.joints)
-                        st.write("Links:", found_project.links)
-                        st.write("Rotors:", found_project.rotors)
+                        st.rerun()
 
                     
-                    with cols_project[2]:
-                       if st.button("Delete Project"): 
-                           for project_data in st.session_state.available_projects:
-                                if project_data.id == st.session_state.selected_project:
-                                    project_data.delete()
-                                    sleep(2)
-                                    st.success("successfully deleted")
-                                    st.rerun()
+                with cols_project[2]:
+                   if st.button("Delete Project", use_container_width=True): 
+                       for project_data in st.session_state.available_projects:
+                            if str(project_data.id) == str(st.session_state.selected_project):
+                                project_data.delete()
+                                st.success("successfully deleted")
+                                sleep(2)
+                                st.rerun()
                                  
             else:
-                st.error("There are not one Joints available")
+                st.error(" 🚨 There are not one Joints available")
         
         else:
             st.info("Stop your animation to do a configuration")
@@ -303,9 +307,12 @@ def run():
                         if pd.isnull(row["x"]) or pd.isnull(row["y"]) or pd.isnull(joint_rot_plt):
                             continue
                         else:
-                            x_values = [row["x"] , st.session_state.df_joint.loc[joint_rot_plt, "x"]]
-                            y_values = [row["y"], st.session_state.df_joint.loc[joint_rot_plt, "y"]]
-                            ax.plot(x_values,y_values,"--", color = "orange")
+                            if joint_rot_plt in st.session_state.df_joint.index:
+                                x_values = [row["x"], st.session_state.df_joint.loc[joint_rot_plt, "x"]]
+                                y_values = [row["y"], st.session_state.df_joint.loc[joint_rot_plt, "y"]]
+                                ax.plot(x_values,y_values,"--", color = "orange")
+                            else:
+                                st.error("🚨 No joint available")
                 ax.grid()
                 st.pyplot(fig)
                 
@@ -336,10 +343,10 @@ def run():
                 with columns_button[0]:
                     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mechanismus_animation.gif"), "rb") as f:
                         gif_bytes = f.read()
-                        st.download_button(label="Download GIF", data=gif_bytes, file_name="mechanism_animation.gif", mime="image/gif")
+                        st.download_button(label="Download GIF", data=gif_bytes, file_name="mechanism_animation.gif", mime="image/gif", use_container_width=True)
                 
                 with columns_button[1]:
-                    if st.button("Stop Animation"):
+                    if st.button("Stop Animation", use_container_width=True):
                         st.success("You stopped your Animation")
                         st.session_state.start_config = True
                         st.session_state.start_anim = False
@@ -348,9 +355,9 @@ def run():
                 with columns_button[2]:
                     if not st.session_state.disable_sim:
                         cvs_file = st.session_state.mechanism.create_csv()
-                        st.download_button(label="Download CSV", data=cvs_file, file_name="mechanism_Data.csv", mime="text/.csv")
+                        st.download_button(label="Download CSV", data=cvs_file, file_name="mechanism_Data.csv", mime="text/.csv", use_container_width=True)
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------
                                                                 #Error
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------      
         else:
-                st.error("Joint conflict")
+                st.error("🚨 Please Check your Link Table")

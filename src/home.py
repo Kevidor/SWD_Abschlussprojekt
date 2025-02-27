@@ -20,7 +20,9 @@ def run():
     st.header("Error")
     st.markdown(""" Once the, as explained in the first warning, it cannot have a connection to two identical joints, as soon as this occurs, 
                 the will be disabled due to this warning. Example of this error:""")
-    st.error("data error")
+    st.error("Please Check your Link Table")
     st.markdown("""If no joints have been created, no links can be possible, so it is pointed out that you should create a joint first. 
                 Example of this error:""")
     st.error("There are not one Joints available")
+
+
