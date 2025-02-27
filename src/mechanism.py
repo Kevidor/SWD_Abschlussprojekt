@@ -49,7 +49,6 @@ class Mechanism(Serializable):
         print(self.rotors)
 
     def calc_DOF(self):
-        self.update()
         n = len(self.joints)
         BC = len([j for j in self.joints if j.is_fixed])
         m = len(self.links)
