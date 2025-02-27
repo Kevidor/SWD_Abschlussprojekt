@@ -272,14 +272,14 @@ if __name__ == "__main__":
     mekanism = Mechanism("Mekanism0")
     
     # Viergelenk
-    joint0 = Joint(None, "Joint0", 0, 0, True, False)
-    joint1 = Joint(None, "Joint1", 10, 35, False, True)
-    joint2 = Joint(None, "Joint2", -25, 10, False, True)
+    #joint0 = Joint(None, "Joint0", 0, 0, True, False)
+    #joint1 = Joint(None, "Joint1", 10, 35, False, True)
+    #joint2 = Joint(None, "Joint2", -25, 10, False, True)
     
-    rotor0 = Rotor(None, -30, 0, joint2)
+    #rotor0 = Rotor(None, -30, 0, joint2)
     
-    link0 = Link(None, joint0, joint1)
-    link1 = Link(None, joint1, rotor0.rot_joint)
+    #link0 = Link(None, joint0, joint1)
+    #link1 = Link(None, joint1, rotor0.rot_joint)
 
     # Strandbeest
     #joint0 = Joint(None, "Joint1", 0, 0, True, False)
@@ -311,8 +311,8 @@ if __name__ == "__main__":
     #mekanism.create_csv()
 
     # Database saving/loading Test
-    mekanism.store_data()
-    mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
-    mekanism_all = Mechanism.find_all()
-    print(mekanism_all)
-    print(mekanism_loaded)
+    #mekanism.store_data()
+    #mekanism_loaded = Mechanism.find_by_attribute( "id", "Mekanism1")
+    #mekanism_all = Mechanism.find_all()
+    #print(mekanism_all)
+    #print(mekanism_loaded)
