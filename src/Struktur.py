@@ -179,16 +179,19 @@ def run():
                         Link(int(id), joint1,joint2, str(row_link["line_style"]), str(row_link["line_color"]))
                     #st.info(Link.links)
                     
-                
+                    
                     for index_rotor, row_rotor in st.session_state.rotor.iterrows():
                         rotor_joint_index = row_rotor["rot_joint"]
-                        joint_rot = None 
+                        joint_rot = None
+                        #st.write(Joint.joints)
                         for j in Joint.joints:
                             if j.id == rotor_joint_index:
                                 joint_rot = j
+                            #st.write(rotor_joint_index)
                         if pd.isna(row_rotor["x"]) or pd.isna(row_rotor["y"]):
                             st.error("Error: x or y is NaN for Rotor")
-                        else:        
+                        else: 
+                                   
                             Rotor(id=int(index_rotor),x=int(row_rotor["x"]), y=int(row_rotor["y"]), rot_joint=joint_rot)
                     #st.info(Rotor.rotors)
                     
@@ -219,6 +222,7 @@ def run():
                     
 
                     if st.button("Load Project", use_container_width=True):
+                        found_project = None
                         for project_data in st.session_state.available_projects:
                             if project_data.id == st.session_state.selected_project:
                                 found_project = project_data
