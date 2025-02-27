@@ -218,19 +218,18 @@ def run():
                         for project_data in st.session_state.available_projects:
                             if project_data.id == st.session_state.selected_project:
                                 found_project = project_data
-                            st.info(found_project)
                         
                         for joint in found_project.joints:
                             joint.pop("id", None)
                         st.session_state.df_joint = pd.DataFrame(found_project.joints)
                             
-                            
                         for link in found_project.links:
                             if isinstance(link["joint1"], Joint):
                                 link["joint1"] = link["joint1"].id
-
+                                st.info(link["joint1"].id)
+                            
                             if isinstance(link["joint2"], Joint):
-                                link["joint2"] = link["joint2"].id
+                                link["joint2"] =int( link["joint2"].id)
                             link.pop("id", None)
                             #st.info(link)
                             st.session_state.df_link = pd.DataFrame(found_project.links)
@@ -238,13 +237,17 @@ def run():
                         for rotor in found_project.rotors:
                             if isinstance(rotor["rot_joint"], Joint):
                                 rotor["rot_joint"] = rotor.id
+                                st.info(rotor.id)
                             rotor.pop("id",None)
+                            #st.info(rotor.id)
                             st.session_state.df_rotor = pd.DataFrame(found_project.rotors)
 
                         st.session_state.project_loaded = True
                         st.success("Project loaded successfully")
-                        sleep(2)
-                        st.rerun()
+                        st.write("Joints:", found_project.joints)
+                        st.write("Links:", found_project.links)
+                        st.write("Rotors:", found_project.rotors)
+
                     
                     with cols_project[2]:
                        if st.button("Delete Project"): 
