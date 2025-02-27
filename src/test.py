@@ -1,307 +1,339 @@
-import os
-import numpy as np
 import pandas as pd
-import tempfile as tp
-import scipy.optimize as opt
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import streamlit as st
 from mechanism_components import Joint, Link, Rotor
-from database import DatabaseConnector
-from serializable import Serializable
-from io import BytesIO
+from mechanism import Mechanism
+import matplotlib.pyplot as plt
+from time import sleep
+import os
 
-class Mechanism(Serializable):
-    db_connector = DatabaseConnector().get_table("Project")
+def run():
+    st.title("Mechanism")
     
-    def __init__(self, name ):
-        super().__init__(name)
-        self.joints = Joint.joints
-        self.links = Link.links
-        self.rotors = Rotor.rotors
-
-        self.x = np.array([])
-        self.A = np.array([])
-        self.L = np.array([])
+    # Session_States
+   
+    if "df_joint" not in st.session_state:
+        st.session_state.df_joint = pd.DataFrame([{"name":"Start","x": 10 , "y" :10, "is_fixed": True,"is_drawn": False}])
         
-    def clear(self):
-        self.joints = []
-        self.links = []
-        self.rotors = []
-        Joint.clear()
-        Link.clear()
-        Rotor.clear()
-        self.x = np.array([])
-        self.A = np.array([])
-        self.L = np.array([])
-        
-    def update(self):
-        self.joints = Joint.joints
-        self.links = Link.links
-        self.rotors = Rotor.rotors
-
-    def calc_DOF(self):
-        self.update()
-        n = len(self.joints)
-        #print(f"Joints: {n}")
-        BC = len([j for j in self.joints if j.is_fixed])
-        #print(f"BC: {BC}")
-        m = len(self.links)
-        #print(f"Links: {m}")
-        dof = 2 * n - 2 * BC - m
-        #print(dof)
-        return dof 
-
-    def create_joint_matrix(self):
-        self.x = np.zeros((Joint.joints_count * 2, 1))
-        for i, joint in enumerate(self.joints):
-            # joint x
-            self.x[i * 2] = joint.x
-            # joint y
-            self.x[i * 2 + 1] = joint.y
+    if "df_link" not in st.session_state:
+        st.session_state.df_link = pd.DataFrame([{"joint1": None, "joint2": None, "line_style":"-", "line_color": "black"}])
     
-    def create_link_matrix(self):
-        self.A = np.zeros((Link.link_count * 2, Joint.joints_count * 2))
-        for i, link in enumerate(self.links):
-            # link x
-            self.A[i * 2, self.joints.index(link.joint1) * 2] = 1
-            self.A[i * 2, self.joints.index(link.joint2) * 2] = -1
-            # link y
-            self.A[i * 2 + 1, self.joints.index(link.joint1) * 2 + 1] = 1
-            self.A[i * 2 + 1, self.joints.index(link.joint2) * 2 + 1] = -1
+    if "rotor" not in st.session_state:
+        st.session_state.rotor = pd.DataFrame([{"x": 25 , "y" :25,"rot_joint": 0}])
+        
+    if "is_correct" not in st.session_state:
+        st.session_state.is_correct = True
+        
+    if "valid" not in st.session_state:
+        st.session_state.valid = True
     
-    def create_lenght_matrix(self):
-        self.create_joint_matrix()
-        self.create_link_matrix()
+    if "rotor_valid" not in st.session_state:
+        st.session_state.rotor_valid = True
         
-        l = self.A @ self.x
-        self.L = np.zeros((Link.link_count, 2))
-        for i in range(Link.link_count):
-            # length x
-            self.L[i, 0] = l[i * 2].item()
-            # length y
-            self.L[i, 1] = l[i * 2 + 1].item()
-
-        l = np.zeros((Link.link_count, 1))
-        for i in range(Link.link_count):
-            l[i] = (self.L[i,0] ** 2 + self.L[i,1] ** 2) ** 0.5
-
-        return l
+    if "start_anim" not in st.session_state:
+        st.session_state.start_anim = False
     
-    def calc_error(self, l1: float):
-        l2 = self.create_lenght_matrix()
-        e = l2 - l1
-        return e.flatten()
+    if "gif" not in st.session_state:
+        st.session_state.gif =None
     
-    def optimize_positions(self, angle: float = 10):
-        l1 = self.create_lenght_matrix()
+    if "start_config" not in st.session_state:
+        st.session_state.start_config = True
         
-        for rotor in self.rotors:
-            rotor.update_rotation(angle)
+    if "disable_sim" not in st.session_state:
+        st.session_state.disable_sim = True
 
-        non_fixed_joints = [j for j in self.joints if not j.is_fixed]
-
-        x0 = np.array([coord for j in non_fixed_joints for coord in (j.x, j.y)])
-
-        def objective(x):
-            for i, joint in enumerate(non_fixed_joints):
-                joint.x, joint.y = x[i * 2], x[i * 2 + 1]
-            
-            return self.calc_error(l1)
-
-        result = opt.least_squares(objective, x0)
-
-        for i, joint in enumerate(non_fixed_joints):
-            joint.x, joint.y = result.x[i * 2], result.x[i * 2 + 1]
-        
-        return result
+    if "available_projects" not in st.session_state:
+        st.session_state.available_projects = Mechanism.find_all()  
     
-    def create_animation(self ):
-        fig, ax = plt.subplots()
-        ax.set_xlim(-100,100)
-        ax.set_ylim(-100,100)
-        ax.set_aspect("equal")
-        joint_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red joints
-        rotor_scatter, = ax.plot([], [], 'ro', markersize=6)  # Red rotors
-        link_lines = [ax.plot([], [], 'b-')[0] for _ in self.links]  # Blue links
-        rotor_lines = [ax.plot([], [], 'g--')[0] for _ in self.links]  # Green rot_lines
-
-        # Dictionary to store past positions of drawn joints
-        drawn_joints = [i for i, joint in enumerate(self.joints) if joint.is_drawn]
-        joint_trajectories = {i: ([], []) for i in drawn_joints}
-        trajectory_lines = {i: ax.plot([], [], 'g-', linewidth=1)[0] for i in drawn_joints}
-
-        def update(frame):
-            """Update the mechanism at each frame"""
-            self.optimize_positions(1)
-
-            x_vals_rot = [rotor.x for rotor in self.rotors]
-            y_vals_rot = [rotor.y for rotor in self.rotors]
-
-            rotor_scatter.set_data(x_vals_rot, y_vals_rot)
-
-            for i, link in enumerate(self.links):
-                x_link = [link.joint1.x, link.joint2.x]
-                y_link = [link.joint1.y, link.joint2.y]
-                link_lines[i].set_data(x_link, y_link)
-
-            for i, rotor in enumerate(self.rotors):
-                x_line = [rotor.x, rotor.rot_joint.x]
-                y_line = [rotor.y, rotor.rot_joint.y]
-                rotor_lines[i].set_data(x_line, y_line)
-
-            for i in drawn_joints:
-                x_traj, y_traj = joint_trajectories[i]
-                x_traj.append(self.joints[i].x)
-                y_traj.append(self.joints[i].y)
-                trajectory_lines[i].set_data(x_traj, y_traj)
+    if "mechanism" not in st.session_state:
+        st.session_state.mechanism = Mechanism(None)
     
-            return [joint_scatter] + [rotor_scatter] + link_lines + rotor_lines + list(trajectory_lines.values())
+    if "load_project" not in st.session_state:
+        st.session_state.load_project = {}
+     
+    if "project_loaded" not in st.session_state:
+        st.session_state.project_loaded = False
         
-        save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),"mechanismus_animation.gif")
-        ani = animation.FuncAnimation(fig, update, frames=360, interval=50, blit= True)
-        ani.save(filename=save_dir, writer="pillow", fps=30)
-        print("GIF saved as mechanism_animation.gif")
+    if "selected_project" not in st.session_state:
+        st.session_state.selected_project = None
+        
+    #Define columns 
+    cols = st.columns(2,gap="medium",border=True)
+    #Left side: Configuration of the Mechanism
+    with cols[0]:
+        if st.session_state.start_config:
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                #Joint
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+            st.subheader(body="Joints")
+            project_list = [str(proj.id) for proj in st.session_state.available_projects]
+            st.markdown("Press ➕ to add a new row")
+            st.markdown("Select der Joint and Press 🗑️ to delete the Joint""")
+            # Add new row, if you press a button
+            if st.session_state.df_joint.empty:
+                if st.button("Add first row for joint"):
+                    st.session_state.df_joint = pd.DataFrame([{"name": "fix Joint", "x": 10, "y": 10, "is_fixed": True,"is_drawn":False}])
+                    st.experimental_set_query_params(updated="1")
+            else:
+                edit_df_joint = st.data_editor(st.session_state.df_joint, 
+                                               column_config = {
+                                                "name": st.column_config.TextColumn(),
+                                                "x": st.column_config.NumberColumn(min_value=-100, max_value=100),
+                                                "y": st.column_config.NumberColumn(min_value=-100, max_value=100),
+                                                "is_fixed": st.column_config.CheckboxColumn("is_fixed",default=False),
+                                                "is_drawn": st.column_config.CheckboxColumn("is_drawn",default=False)},
+                                                num_rows="dynamic",
+                                                hide_index=False,
+                                                use_container_width=True)	
+                if not edit_df_joint.equals(st.session_state.df_joint):
 
-    def create_csv(self):
-        data = []
-        header = []
-        
-        # Header
-        for i in range(len(self.rotors)):
-            header.append("angle" + str(i))
-        
-        for i in range(len(self.joints)):
-            header.append("x" + str(i))
-            header.append("y" + str(i))
-            
-        # Values
-        for i in range(360):
-            self.optimize_positions(1)
-            row = []
-            for i_frame, rotor in enumerate(self.rotors):
-                row.append(rotor.angle)    
-            
-            for i_frame, joint in enumerate(self.joints):
-                row.append(joint.x)
-                row.append(joint.y)
+                    st.session_state.df_joint = edit_df_joint
+                    st.session_state.df_joint.reset_index(drop=True, inplace=True)
+                    st.rerun()
+                #Debugging
+                for index,row in st.session_state.df_joint.iterrows():
+                    st.write(f"Index: {index}, x: {row['x']}, y: {row['y']}, is_fixed: {type(row['is_fixed'])}, is_drawn: {type(row['is_drawn'])}")
+
+            if len(st.session_state.df_joint) != 0:
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                #Rotor
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+                st.subheader("Choose your rotor")
+                if st.session_state.rotor.empty:
+                    if st.button("Add first row for Rotor"):
+                        st.session_state.rotor = pd.DataFrame([{"x": 25 , "y" :25,"rot_joint": 0}])
+                        st.rerun()
+                else:
+                    edit_df_rotor = st.data_editor(st.session_state.rotor,
+                                                   column_config= {
+                                                       "x": st.column_config.NumberColumn(min_value=-100, max_value=100),
+                                                        "y": st.column_config.NumberColumn(min_value=-100, max_value=100),
+                                                       "rot_joint": st.column_config.SelectboxColumn("rot_joint", options=edit_df_joint.index, default=None)},
+                                                   num_rows="dynamic",
+                                                   hide_index=False,
+                                                   use_container_width=True)
+                    if  not edit_df_rotor.equals(st.session_state.rotor):
+                        st.session_state.rotor_valid = True
+                        st.session_state.rotor = edit_df_rotor
+                        st.session_state.rotor.reset_index(drop=True, inplace=True)
+                        st.experimental_set_query_params(updated="1")
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                #Link
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------               
+                st.subheader("Link")
+                if not st.session_state.df_link.empty:
+                    edit_df_link = st.data_editor(st.session_state.df_link,
+                                                  column_config=
+                                                        {
+                                                         "joint1": st.column_config.SelectboxColumn("joint1", options=edit_df_joint.index, default=None),
+                                                         "joint2": st.column_config.SelectboxColumn("joint2", options=edit_df_joint.index, default= None),
+                                                         "line_style": st.column_config.SelectboxColumn("line_style",options=["-","--","-."],default="-"),
+                                                         "line_color": st.column_config.SelectboxColumn("line_color", options=["black","blue","red", "magenta", "green", "yellow", "purple"], default="black")},
+                                                        num_rows="dynamic",
+                                                        hide_index=False,
+                                                        use_container_width=True)
+                    if not edit_df_link.equals(st.session_state.df_link):
+                        st.session_state.valid = True
+                        for index, row in edit_df_link.iterrows():
+                            if row["joint1"] is None or row["joint2"] is None:
+                                continue
+                            else:
+                                if row["joint1"] == row["joint2"]:
+                                    st.warning(f"⚠️ Please choose different joints for Link{index}")
+                                    st.session_state.valid = False
+                                    st.session_state.is_correct = False
+                                else:
+                                    st.session_state.is_correct = True
+                        if st.session_state.is_correct:    
+                            st.session_state.df_link = edit_df_link
+                            st.session_state.df_link.reset_index(drop=True, inplace=True)
+                            st.rerun()
+                else:
+                    if st.button("add first row for link"):
+                        st.session_state.df_link = pd.DataFrame([{"joint1": None, "joint2": None, "line_style":"-", "line_color": "black"}])
+                        st.rerun()
+                for index,row in st.session_state.df_link.iterrows():
+                    st.write(f"Index: {type(index)}, Joint1: {type(row['joint1'])}, Joint2: {type(row['joint2'])}")
                 
-            data.append(row)
-        
-        data_frame = pd.DataFrame(data=data,columns=header)
-        return data_frame.to_csv(index=False, sep=',')
-    
-    def to_dict(self):
-         return{
-                "name" : self.name,
-                "Joints" : [joint.to_dict() for joint in self.joints],
-                "Links" : [link.to_dict() for link in self.links],
-                "rotor" : [rotor.to_dict() for rotor in self.rotors]
-                }
-    def get_error(self):
-        l1  = self.create_lenght_matrix()
-        rotor_Angle = []
-        error_data = []
-        for i in range(360):
-            for rotor in self.rotors:
-                rotor.update_rotation(1)
-                rotor_Angle.append(rotor.angle)
-            angle_er = np.array(rotor_Angle)
-            
-            for i_links in range(error_data): 
-                error_data_cur= (self.calc_error(l1=l1))
-                error_data_= np.array(error_data_cur)
-        fig, ax = plt.subplots()
-        ax.set_title("Fehler pro Link über 360 Iterationen")
-        ax.set_xlabel("Iteration (entspricht Rotationsgrad)")
-        ax.set_ylabel("Längen-Fehler")
-        
-        for i_link in range(len(self.links)):
-            ax.plot(angle_er, error_data[:, i_link], label=f"Link {i_link+1}")
-    
-        ax.legend()
-        fig.savefig("Fehler_test.png")
-        plt.show()  
-        
-                #print(error_arr)
-                #ax.plot(angle_er,error_arr[:,i_links])
-        
-        fig.savefig("Fehler_test.png")
-             
-    @classmethod
-    def instantiate_from_dict(cls, data: dict):
-        return cls(data['name'], data['joint'], data['link'], data['rotor'])
+                if st.button("Check Degrees of freedom"):  
+                    st.session_state.mechanism.clear()
+                    for index_joint, row_joint in st.session_state.df_joint.iterrows():
+                        st.info(f"{row_joint}")
+                        Joint(id=int(index_joint),name=str(row_joint["name"]), x=float(row_joint["x"]), y=float(row_joint["y"]), is_fixed=bool(row_joint["is_fixed"]),is_drawn=bool(row_joint["is_drawn"]))
+                    #st.info(Joint.joints)
 
-    def get_name(self) -> str:
-        return F"{self.id}"
-    
-    def __str__(self) -> str:
-        return F"Projectname {self.id} with this Konfiguration {self.joints}, {self.links}, {self.rotors}"
-  
-if __name__ == "__main__":
-    # Initialize Mechanism
-    mekanism = Mechanism(None)
-    
-    # Viergelenk
-    #joint0 = Joint(None, "Joint0", 0, 0, True, False)
-    #joint1 = Joint(None, "Joint1", 10, 35, False, True)
-    #joint2 = Joint(None, "Joint2", -25, 10, False, True)
-    #
-    #rotor0 = Rotor(-30, 0, joint2)
-    #
-    #link0 = Link(None, joint0, joint1)
-    #link1 = Link(None, joint1, rotor0.rot_joint)
-    
-    #mekanism.create_csv()
-    #print(mekanism.calc_error(10))
-    #Strandbeest
-    joint0 = Joint(None, "Joint1", 0, 0, True, False)
-    joint1 = Joint(None, "Joint3", 49.73, -1.55, False, True)
-    joint2 = Joint(None, "Joint4", 18.2, 37.3, False, True)
-    joint3 = Joint(None, "Joint5", -34.82, 19.9, False, True)
-    joint4 = Joint(None, "Joint6", -30.5, -19.22, False, True)
-    joint5 = Joint(None, "Joint7", -19.33, -84.03, False, True)
-    joint6 = Joint(None, "Joint8", 0.67, -39.3, False, True)
-    
-    rotor0 = Rotor(38, 7.8, joint1)
-    
-    link0 = Link(None, joint0, joint2)
-    link1 = Link(None, joint0, joint3)
-    link2 = Link(None, joint0, joint6)
-    link3 = Link(None, rotor0.rot_joint, joint2)
-    link4 = Link(None, joint2, joint3)
-    link5 = Link(None, joint3, joint4)
-    link6 = Link(None, joint4, joint5)
-    link7 = Link(None, joint5, joint6)
-    link8 = Link(None, joint6, rotor0.rot_joint)
-    link9 = Link(None, joint6, joint4)
-    
+                    for id, row_link in  st.session_state.df_link.iterrows():
+                        j1_index = row_link["joint1"]
+                        j2_index = row_link["joint2"]
+                        joint1, joint2  = None, None
+                        for j in Joint.joints:
+                            if j.id == j1_index:
+                                joint1 = j
+                            if j.id == j2_index:
+                                joint2 = j
+                        Link(int(id), joint1,joint2, str(row_link["line_style"]), str(row_link["line_color"]))
+                    #st.info(Link.links)
+                    
+                
+                    for index_rotor, row_rotor in st.session_state.rotor.iterrows():
+                        rotor_joint_index = row_rotor["rot_joint"]
+                        joint_rot = None 
+                        for j in Joint.joints:
+                            if j.id == rotor_joint_index:
+                                joint_rot = j
+                        Rotor(id=int(index_rotor),x=int(row_rotor["x"]), y=int(row_rotor["y"]), rot_joint=joint_rot)
+                    #st.info(Rotor.rotors)
+                    
+                    st.session_state.mechanism = Mechanism("", Joint.joints, Link.links, Rotor.rotors)
+                    st.info(st.session_state.mechanism.calc_DOF())
+                    st.info(st.session_state.mechanism)
+                    
+                    st.session_state.disable_sim = False if st.session_state.mechanism.calc_DOF() == 0 else True
+                    st.write(Rotor.rotors)
+                    st.info(st.session_state.disable_sim)
+                
+                project_list = []
+                for project_id in st.session_state.load_project:
+                    project_list.append(str(project_id.id))
 
-    #mekanism.create_joint_matrix()
-    #mekanism.create_link_matrix()
-    #l = mekanism.create_lenght_matrix()
-    #
-    #print("\n Initial Mechanism:")
-    #print(f"x = \n{mekanism.x}")
-    #print(f"A = \n{mekanism.A}")
-    #print(f"L = \n{mekanism.L}")
-    #print(f"l = \n{l}")
-    #
-    #print("\n")
-    #rotor0.update_rotation(10)
-    #print(rotor0)
-    #
-    #mekanism.create_joint_matrix()
-    #mekanism.create_link_matrix()
-    #l = mekanism.create_lenght_matrix()
-    #
-    #print("\n Rotated Mechanism:")
-    #print(f"x = \n{mekanism.x}")
-    #print(f"A = \n{mekanism.A}")
-    #print(f"L = \n{mekanism.L}")
-    #print(f"l = \n{l}")
-    #mekanism.get_error()
+                if not st.session_state.project_loaded: 
+                    selected_project = st.selectbox("Select your Project", options=project_list)
+                    st.session_state.selected_project = selected_project 
+                else:
+                    st.info(f"Loaded project: {st.session_state.selected_project}")
 
-    #print(mekanism.create_csv())
-    print(mekanism.calc_error(10))
-    mekanism.get_error()
-    #print(x_value)
+                if not st.session_state.project_loaded and st.session_state.selected_project:
+                    found_project = Mechanism.find_by_attribute("id", st.session_state.selected_project)
+                    st.info(f"Loading project: {found_project.id}")
+
+                    Joint.clear()
+                    st.session_state.df_joint = pd.DataFrame(found_project.joints)
+
+                    Link.clear()
+                    for link in found_project.links:
+                        link["joint1"] = link["joint1"]["id"]
+                        link["joint2"] = link["joint2"]["id"]
+                    st.info(link)
+                    st.session_state.df_link = pd.DataFrame(found_project.links)
+
+                    Rotor.clear()
+                    for rotor in found_project.rotors:
+                        rotor["rot_joint"] = rotor["rot_joint"]["id"]
+                    st.session_state.df_rotor = pd.DataFrame(found_project.rotors)
+
+                    st.session_state.project_loaded = True
+
+                if st.session_state.project_loaded:
+                    if st.button("Reset Selection"):
+                        st.session_state.project_loaded = False
+                        st.session_state.selected_project = None
+                        st.rerun()
+
+                        
+                project_name = st.text_input("Enter your Project name")
+                
+                cols_project = st.columns(2)
+                with cols_project[0]:
+                    if st.button("Save Konfiguration", disabled= st.session_state.disable_sim):
+                            st.session_state.mechanism.id = project_name
+                            st.session_state.mechanism.store_data()
+                            st.success("You saved your Project")
+                            sleep(2)
+                            st.rerun()
+               
+                with cols_project[1]:
+                    if st.button("Search your Projekt"):
+                        st.session_state.load_project = Mechanism.find_all()
+                        #print(st.session_state.load_project)
+                        st.success("loaded succesfully")    
+                        sleep(2)
+                        st.rerun()
+                         
+            else:
+                st.error("There are not one Joints available")
+        else:
+            st.info("Stop your animation to do a configuration")
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                #Graphics
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------      
+    with cols[1]:
+        st.subheader("Preview")
+        if st.session_state.valid:
+            if st.session_state.start_anim == False:                  
+            #for a Preview, before starting an animation
+                fig, ax = plt.subplots()    
+                ax.set_xlim(-100,100)
+                ax.set_ylim(-100,100)
+                ax.set_title("Mechanismus")
+                ax.set_xlabel("x")
+                ax.set_ylabel("y")
+                ax.scatter(st.session_state.df_joint["x"],st.session_state.df_joint["y"])
+                ax.scatter(st.session_state.rotor["x"],st.session_state.rotor["y"])
+                for index_link,row in st.session_state.df_link.iterrows():
+                    j1_index = row["joint1"]
+                    j2_index = row["joint2"]
+                    if st.session_state.df_joint.empty or j1_index not in st.session_state.df_joint.index or j2_index not in st.session_state.df_joint.index or row["line_style"] is None  or row["line_color"] is None:
+                            st.warning("Correct your  Link Table")
+                    else:
+                        x_values = [st.session_state.df_joint.loc[j1_index, "x"] , st.session_state.df_joint.loc[j2_index, "x"]]
+                        y_values = [st.session_state.df_joint.loc[j1_index, "y"], st.session_state.df_joint.loc[j2_index, "y"]]
+                        Linestyle : str = row["line_style"]
+                        color: str = row["line_color"]
+                        ax.plot(x_values, y_values, Linestyle, linewidth=2, color = color)
+                for index,row in st.session_state.df_joint.iterrows():
+                    ax.text(row["x"] + 2, row["y"] + 3, row["name"], fontsize=12, color="black")
+                for index,row in st.session_state.rotor.iterrows():
+                    if not st.session_state.df_joint.empty:
+                        joint_rot_plt = row["rot_joint"]
+                        if pd.isnull(row["x"]) or pd.isnull(row["y"]) or pd.isnull(joint_rot_plt):
+                            continue
+                        else:
+                            x_values = [row["x"] , st.session_state.df_joint.loc[joint_rot_plt, "x"]]
+                            y_values = [row["y"], st.session_state.df_joint.loc[joint_rot_plt, "y"]]
+                            ax.plot(x_values,y_values,"--", color = "orange")
+                ax.grid()
+                st.pyplot(fig)
+                #st.info(mechanism.rotors)
+                #st.info(mechanism.links)
+                #st.info(mechanism.joints)
+                cols = st.columns(3)
+                with cols[0]:
+                    if st.button("Start Animation", disabled= st.session_state.disable_sim):
+                        st.session_state.start_anim = True
+                        st.session_state.start_config = False
+                        st.experimental_set_query_params(updated="1")
+                with cols[1]:
+                    if st.button("Cancel"):
+                        st.session_state.start_project = False
+                        st.experimental_set_query_params(updated="1")
+                with cols[2]:
+                    fig.savefig("Preview_Mechanimus.png", transparent=None, dpi= 'figure')
+                    with open("Preview_Mechanimus.png", "rb") as preview:
+                        st.download_button(label="Save Preview-Ilustration",data= preview, file_name="Preview_Mechanimus.png", mime="image/png")
+            else:
+                st.info("The animation could take a few seconds!")
+                st.session_state.mechanism.create_animation()
+                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mechanismus_animation.gif"), "rb") as f:
+                    gif_bytes = f.read()
+                    st.image(gif_bytes, caption="Mechanism-Animation", use_container_width=True)
+                columns_button = st.columns(3,gap="small")
+                with columns_button[0]:
+                    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mechanismus_animation.gif"), "rb") as f:
+                        gif_bytes = f.read()
+                        st.download_button(label="Download GIF", data=gif_bytes, file_name="mechanism_animation.gif", mime="image/gif")
+                
+                with columns_button[1]:
+                    if st.button("Stop Animation"):
+                        st.success("You stopped your Animation")
+                        st.session_state.start_config = True
+                        st.session_state.start_anim = False
+                        st.experimental_set_query_params(updated="1")
+                
+                with columns_button[2]:
+                    if not st.session_state.disable_sim:
+                        cvs_file = st.session_state.mechanism.create_csv()
+                        st.download_button(label="Download CSV", data=cvs_file, file_name="mechanism_Data.csv", mime="text/.csv")
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                #Error
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------      
+        else:
+                st.error("Joint conflict")

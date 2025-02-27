@@ -41,6 +41,13 @@ class Joint(Serializable):
     @classmethod
     def instantiate_from_dict(cls, data: dict):
         return cls(data['id'], data['name'], data['x'], data['y'], data['is_fixed'], data['is_drawn'])
+    
+    @classmethod
+    def get_joint(self,id):
+        for joint in self.joints:
+            if joint.id == id:
+                return joint
+            
         
 class Link(Serializable):
     links = []
